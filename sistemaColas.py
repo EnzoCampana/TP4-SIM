@@ -1,66 +1,74 @@
-"""
-N LINEAS PARA VER - EJEMPLO 5000
-NUMERO DE LINEA A PARTIR DESDE DONDE VER - POR EJEMPLO LINEA 5 (MUESTRA SOLO 300 DE ELLAS, HASTA LA 305)
-CABECERA VECTOR DE ESTADO (PRIMERA FILA)
-ULTIMA FILA DEL VECTOR DE ESTADO
-
-Objetos
-
-Clientes -> Pacientes
-estados: siendo atendido, esperando
-
-Servidores -> dependen del area
-estados: atendiendo, libre
-
-Eventos
-
-llegada_paciente ( exponencial PERO SU DISTRIBUCION DEPENDE DEL AREA)
-fin_atencion_paciente ( SU DISTRIBUCION DEPENDE DEL AREA)
-
-"""
-
 import random
 import math
-import tkinter as tk
-from tkinter import ttk
+import pyQt5
+
+class Area:
+    def __init__(self, nombre, cantidad_especialistas, especialistas):
+        self.nombre = nombre
+        self.cantidad_especialistas = cantidad_especialistas
+        self.especialistas = especialistas
+
+class Especialista:
+    def __init__(self, tasa_servicio):
+        self.tasa_servicio = tasa_servicio
+        self.estado = "L"  # Libre # Atendiendo
+        self.cola = []
 
 class Paciente:
-    def __init__(self, id, hora_llegada, area, estado):
+    def __init__(self, id, hora_llegada,estado, area, puesto):
         self.id = id
         self.hora_llegada = hora_llegada
         self.hora_salida = None
+        self.estado = estado #Esperando Atencion #Siendo Atendido 
         self.area = area
-        self.estado = estado
+        self.puesto = puesto
+  
+def buscar_tasa_llegada_por_area(area):
+    tasas_por_area = {
+        "consulta": 30,
+        "odontologia": 12,
+        "pediatria": 10,
+        "laboratorio": 20,
+        "farmacia": 25
+    }
+    return tasas_por_area.get(area, "Área no válida")
 
-class Servidor:
-    def __init__(self, id, tasa_servicio):
-        self.id = id
-        self.tasa_servicio = tasa_servicio
-        self.estado = "L"  # Libre
-        self.cola = []
+def buscar_tasa_atencion_por_area(area):
+    tasas_por_area = {
+        "consulta": 6,
+        "odontologia": 4,
+        "pediatria": 5,
+        "laboratorio": 8,
+        "farmacia": 15
+    }
+    return tasas_por_area.get(area, "Área no válida")
+        
+def generar_tiempo_exponencial(tasa):
+    lambd = tasa / 60
+    return -1/lambd*math.log(1-random.random())
 
-def llegada_paciente(reloj, tasa, area):
+def llegada_paciente(reloj, area):
+    tasa = buscar_tasa_llegada_por_area(area)
     tiempo_entre_llegadas = generar_tiempo_exponencial(tasa)
     prox_llegada = reloj + tiempo_entre_llegadas
-    paciente = Paciente(len(pacientes), prox_llegada, area, "Esperando")
+    paciente = Paciente(len(pacientes), prox_llegada, area, "EA")
     return prox_llegada, paciente
 
-def fin_atencion_paciente(reloj, tasa):
+def fin_atencion_paciente(reloj, area):
+    tasa = buscar_tasa_llegada_por_area(area)
     tiempo_atencion = generar_tiempo_exponencial(tasa)
     fin_atencion = reloj + tiempo_atencion
-    return fin_atencion
+    return tiempo_atencion, fin_atencion
 
-def generar_tiempo_exponencial(tasa):
-    return -math.log(1 - random.random()) / tasa
-
-def simular_farmacia(N, tasa_llegada, tasa_servicio):
+def simular_centro_salud(N, tasa_servicio):
     reloj = 0
-    cantidad_farmaceuticos = 2
-    farmaceuticos = [Servidor(i, tasa_servicio) for i in range(cantidad_farmaceuticos)]
     global pacientes
     pacientes = []
 
-    prox_llegada, paciente = llegada_paciente(reloj, tasa_llegada, "Farmacia")
+    cantidad_farmaceuticos = 2
+    farmaceuticos = [Especialista(i, tasa_servicio) for i in range(cantidad_farmaceuticos)]
+
+    prox_llegada, paciente = llegada_paciente(reloj, "farmacia")
     pacientes.append(paciente)
 
     # Definir la lista de eventos
@@ -75,7 +83,7 @@ def simular_farmacia(N, tasa_llegada, tasa_servicio):
             pacientes.append(paciente)
             asignar_a_farmaceutico(paciente, farmaceuticos, reloj, eventos)
 
-            prox_llegada, nuevo_paciente = llegada_paciente(reloj, tasa_llegada, "Farmacia")
+            prox_llegada, nuevo_paciente = llegada_paciente(reloj, "farmacia")
             eventos.append((prox_llegada, "llegada", nuevo_paciente))
         
         elif tipo_evento == "fin_atencion":
@@ -93,10 +101,10 @@ def simular_farmacia(N, tasa_llegada, tasa_servicio):
 
 def asignar_a_farmaceutico(paciente, farmaceuticos, reloj, eventos):
     for farmaceutico in farmaceuticos:
-        if farmaceutico.estado == "L":
+        if farmaceutico.estado == "Libre":
             farmaceutico.cola.append(paciente)
-            farmaceutico.estado = "Ocupado"
-            paciente.estado = "Siendo Atendido"
+            farmaceutico.estado = "Atendiendo"
+            paciente.estado = "SA"
             prox_fin_atencion = fin_atencion_paciente(reloj, farmaceutico.tasa_servicio)
             eventos.append((prox_fin_atencion, "fin_atencion", farmaceutico))
             return
@@ -105,28 +113,10 @@ def asignar_a_farmaceutico(paciente, farmaceuticos, reloj, eventos):
     menor_cola.cola.append(paciente)
 
 def mostrar_resultados(pacientes):
-    root = tk.Tk()
-    root.title("Simulación del Centro de Salud")
-
-    tree = ttk.Treeview(root)
-    tree["columns"] = ("Evento", "Reloj", "Hora de Salida", "Área", "Estado")
-    tree.column("#0", width=0, stretch=tk.NO)
-    tree.column("Evento", anchor=tk.CENTER, width=50)
-    tree.column("Reloj", anchor=tk.CENTER, width=150)
-   
-    tree.heading("#0", text="", anchor=tk.CENTER)
-    tree.heading("Evento", text="Evento", anchor=tk.CENTER)
-    tree.heading("Reloj", text="Reloj", anchor=tk.CENTER)
-   
-
-    for paciente in pacientes:
-        tree.insert("", tk.END, values=(paciente.id, round(paciente.hora_llegada, 2)))
-
-    tree.pack()
-    root.mainloop()
-
+    pass
+    
 # Parámetros de la simulación
-N = 5000  # Número de líneas para ver
+N = 10  # Número de líneas a simular
 tasa_llegada = 25  # Tasa de llegada de pacientes
 tasa_servicio = 15  # Tasa de servicio de los farmacéuticos
 
