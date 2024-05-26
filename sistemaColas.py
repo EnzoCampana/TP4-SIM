@@ -85,59 +85,58 @@ def simular_centro_salud(N):
 
             areas.append(area)
 
-#modificar a partir de aca la logica
-    prox_llegada, paciente = llegada_paciente(reloj, "farmacia")
-    pacientes.append(paciente)
+
+    eventos = []
+# Inicializar eventos de llegada para cada área
+    for area in areas:
+        prox_llegada, paciente = llegada_paciente(reloj, area.nombre)
+        pacientes.append(paciente)
+        eventos.append((prox_llegada, "llegada", paciente))
 
     # Definir la lista de eventos
-    eventos = [(prox_llegada, "llegada", paciente)]
     
     while len(pacientes) < N:
         eventos.sort(key=lambda x: x[0])
         reloj, tipo_evento, entidad = eventos.pop(0)
-        
+
         if tipo_evento == "llegada":
             paciente = entidad
             pacientes.append(paciente)
-            asignar_a_farmaceutico(paciente, farmaceuticos, reloj, eventos)
-
-            prox_llegada, nuevo_paciente = llegada_paciente(reloj, "farmacia")
+            for area in areas:
+                if area.nombre == paciente.area:
+                    asignar_a_especialista(paciente, area.especialistas, reloj, eventos)
+            prox_llegada, nuevo_paciente = llegada_paciente(reloj, paciente.area)
             eventos.append((prox_llegada, "llegada", nuevo_paciente))
-        
+
         elif tipo_evento == "fin_atencion":
-            farmaceutico = entidad
-            if farmaceutico.cola:
-                paciente_atendido = farmaceutico.cola.pop(0)
+            especialista = entidad
+            if especialista.cola:
+                paciente_atendido = especialista.cola.pop(0)
                 paciente_atendido.estado = "Atendido"
                 paciente_atendido.hora_salida = reloj
 
-                if farmaceutico.cola:
-                    prox_fin_atencion = fin_atencion_paciente(reloj, farmaceutico.tasa_servicio)
-                    eventos.append((prox_fin_atencion, "fin_atencion", farmaceutico))
+                if especialista.cola:
+                    prox_fin_atencion = fin_atencion_paciente(reloj, especialista.tasa_servicio)
+                    eventos.append((prox_fin_atencion, "fin_atencion", especialista))
                 else:
-                    farmaceutico.estado = "L"
+                    especialista.estado = "L"
 
-def asignar_a_farmaceutico(paciente, farmaceuticos, reloj, eventos):
-    for farmaceutico in farmaceuticos:
-        if farmaceutico.estado == "Libre":
-            farmaceutico.cola.append(paciente)
-            farmaceutico.estado = "Atendiendo"
+def asignar_a_especialista(paciente, especialistas, reloj, eventos):
+    for especialista in especialistas:
+        if especialista.estado == "L":
+            especialista.cola.append(paciente)
+            especialista.estado = "Atendiendo"
             paciente.estado = "SA"
-            prox_fin_atencion = fin_atencion_paciente(reloj, farmaceutico.tasa_servicio)
-            eventos.append((prox_fin_atencion, "fin_atencion", farmaceutico))
+            prox_fin_atencion = fin_atencion_paciente(reloj, especialista.tasa_servicio)
+            eventos.append((prox_fin_atencion, "fin_atencion", especialista))
             return
 
-    menor_cola = min(farmaceuticos, key=lambda f: len(f.cola))
+    menor_cola = min(especialistas, key=lambda e: len(e.cola))
     menor_cola.cola.append(paciente)
-
 
 # Parámetros de la simulación
 
 N = 10  # Número de líneas a simular
 
-
 # Ejecutar simulación
-
-
-# Mostrar resultados en una tabla de Tkinter
-
+simular_centro_salud(N)
