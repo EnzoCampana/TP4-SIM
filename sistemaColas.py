@@ -3,15 +3,16 @@ import math
 import pyQt5
 
 class Area:
-    def __init__(self, nombre, cantidad_especialistas, especialistas):
+    def __init__(self, nombre, numero_especialistas, tasa):
         self.nombre = nombre
-        self.cantidad_especialistas = cantidad_especialistas
-        self.especialistas = especialistas
+        self.numero_especialistas = numero_especialistas
+        self.tasa = tasa
+        self.especialistas = []
 
 class Especialista:
-    def __init__(self, tasa_servicio):
-        self.tasa_servicio = tasa_servicio
-        self.estado = "L"  # Libre # Atendiendo
+    def __init__(self, id, estado):
+        self.id = id
+        self.estado = estado  # Libre # Atendiendo
         self.cola = []
 
 class Paciente:
@@ -60,14 +61,31 @@ def fin_atencion_paciente(reloj, area):
     fin_atencion = reloj + tiempo_atencion
     return tiempo_atencion, fin_atencion
 
-def simular_centro_salud(N, tasa_servicio):
+def simular_centro_salud(N):
     reloj = 0
     global pacientes
     pacientes = []
 
-    cantidad_farmaceuticos = 2
-    farmaceuticos = [Especialista(i, tasa_servicio) for i in range(cantidad_farmaceuticos)]
+    areas_info = [
+            ("consulta", 5),
+            ("odontologia", 3),
+            ("pediatria", 2),
+            ("laboratorio", 4),
+            ("farmacia", 2)
+        ]
+        
+    areas = []
+    for area_nombre, numero_especialistas in areas_info:
+            tasa = buscar_tasa_atencion_por_area(area_nombre)
+            area = Area(area_nombre, numero_especialistas, tasa)
+            
+            for i in range(numero_especialistas):
+                especialista = Especialista(id=i)
+                area.especialistas.append(especialista)
 
+            areas.append(area)
+
+#modificar a partir de aca la logica
     prox_llegada, paciente = llegada_paciente(reloj, "farmacia")
     pacientes.append(paciente)
 
@@ -112,16 +130,14 @@ def asignar_a_farmaceutico(paciente, farmaceuticos, reloj, eventos):
     menor_cola = min(farmaceuticos, key=lambda f: len(f.cola))
     menor_cola.cola.append(paciente)
 
-def mostrar_resultados(pacientes):
-    pass
-    
+
 # Parámetros de la simulación
+
 N = 10  # Número de líneas a simular
-tasa_llegada = 25  # Tasa de llegada de pacientes
-tasa_servicio = 15  # Tasa de servicio de los farmacéuticos
+
 
 # Ejecutar simulación
-simular_farmacia(N, tasa_llegada, tasa_servicio)
+
 
 # Mostrar resultados en una tabla de Tkinter
-mostrar_resultados(pacientes)
+
