@@ -13,7 +13,13 @@ class Area:
 
         self.medicos = [Medico(i) for i in range(cantidad_especialistas)]
         
-        self.pacientes_atendidos = 0
+        self.pacientes_atendidos = []
+
+    def agregar_paciente_atendido(self, paciente):
+        self.pacientes_atendidos.append(paciente)
+
+    def quitar_paciente_atendido(self, paciente):
+        self.pacientes_atendidos.remove(paciente)
 
 class Medico:
     def __init__(self, id):
@@ -26,6 +32,8 @@ class Paciente:
         self.tiempo_ingreso = tiempo_ingreso
         self.tiempo_inicio_atencion = None
         self.tiempo_salida = None
+        # es necesario para liberar a ese medico cuando termine la atencion
+        self.medico_asignado = None
 
 def generar_tiempo_exponencial(media):
     return -media * math.log(1 - random.random())
@@ -41,11 +49,12 @@ def generar_tiempo_atencion(media):
 class SimulacionCentroSalud:
     def __init__(self):
         self.reloj = 0
-        self.tiempo_total_simulacion = 0
+        self.tiempo_total_simulacion = 60
+        self.cantidad_eventos_a_simular = 1000
         self.eventos = []
         # crear las areas
         self.areas = []
-        self.nombre_areas = ["consulta", "ondontologia", "pediatria", "laboratorio", "farmacia"]
+        self.nombre_areas = ["consulta", "odontologia", "pediatria", "laboratorio", "farmacia"]
         self.especialistas_por_area = [5, 3, 2, 4, 2]
         self.media_llegadas_area = [30, 12, 10, 20, 25]
         self.media_atencion_area = [6, 4, 5, 8, 15]
@@ -55,7 +64,7 @@ class SimulacionCentroSalud:
                               self.especialistas_por_area[i],
                               self.media_llegadas_area[i],
                               self.media_atencion_area[i]))
-            
+
         # estos datos son para calcular los estadisticos q pide
         self.pacientes_atendidos = 0
         self.tiempo_permanencia_total = 0
@@ -75,20 +84,86 @@ class SimulacionCentroSalud:
                                       primeras_llegadas[4], primeras_llegadas[4], None, None, 
                                        None, None))
         
-    def escribir_fila_tabla_resultados(self, area):
+    def escribir_fila_tabla_resultados(self, area, evento, tiempo_entre_llegadas, proxima_llegada, tiempo_atencion, fin_atencion):
         if area == "consulta":
-            pass
-        elif area == "ondontologia":
-            pass
+            if evento == "llegada":
+                self.tabla_resultados.append((f"llegada_paciente_{area}", self.reloj, tiempo_entre_llegadas, proxima_llegada, tiempo_atencion, fin_atencion,
+                                      None, None, None, None,  
+                                      None, None, None, None, 
+                                      None, None, None, None, 
+                                      None, None, None, None, 
+                                       None, None))
+            elif evento == "fin_atencion":
+                self.tabla_resultados.append((f"fin_atencion_paciente_{area}", self.reloj, None, None, tiempo_atencion, fin_atencion,
+                                      None, None, None, None,  
+                                      None, None, None, None, 
+                                      None, None, None, None, 
+                                      None, None, None, None, 
+                                       None, None))
+        elif area == "odontologia":
+            if evento == "llegada":
+                self.tabla_resultados.append((f"llegada_paciente_{area}", self.reloj, None, None, None, None, 
+                                      tiempo_entre_llegadas, proxima_llegada, tiempo_atencion, fin_atencion, 
+                                      None, None, None, None, 
+                                      None, None, None, None, 
+                                      None, None, None, None, 
+                                       None, None))
+            elif evento == "fin_atencion":
+                self.tabla_resultados.append((f"fin_atencion_paciente_{area}", self.reloj, None, None, None, None,
+                                      None, None, tiempo_atencion, fin_atencion,
+                                      None, None, None, None, 
+                                      None, None, None, None, 
+                                      None, None, None, None, 
+                                       None, None))
         elif area == "pediatria":
-            pass
+            if evento == "llegada":
+                self.tabla_resultados.append((f"llegada_paciente_{area}", self.reloj, None, None, None, None,
+                                      None, None, None, None,  
+                                      tiempo_entre_llegadas, proxima_llegada, tiempo_atencion, fin_atencion, 
+                                      None, None, None, None, 
+                                      None, None, None, None, 
+                                       None, None))
+            elif evento == "fin_atencion":
+                self.tabla_resultados.append((f"fin_atencion_paciente_{area}", self.reloj, None, None, None, None,
+                                      None, None, None, None,  
+                                      None, None,  tiempo_atencion, fin_atencion,  
+                                      None, None, None, None, 
+                                      None, None, None, None, 
+                                       None, None))
         elif area == "laboratorio":
-            pass
+            if evento == "llegada":
+                self.tabla_resultados.append((f"llegada_paciente_{area}", self.reloj, None, None, None, None,
+                                      None, None, None, None,  
+                                      None, None, None, None, 
+                                      tiempo_entre_llegadas, proxima_llegada, tiempo_atencion, fin_atencion, 
+                                      None, None, None, None, 
+                                       None, None))
+            elif evento == "fin_atencion":
+                self.tabla_resultados.append((f"fin_atencion_paciente_{area}", self.reloj, None, None, None, None,
+                                      None, None, None, None,  
+                                      None, None, None, None, 
+                                      None, None,  tiempo_atencion, fin_atencion, 
+                                      None, None, None, None, 
+                                       None, None))
         elif area == "farmacia":
-            pass
+            if evento == "llegada":
+                self.tabla_resultados.append((f"llegada_paciente_{area}", self.reloj, None, None, None, None,
+                                      None, None, None, None,  
+                                      None, None, None, None, 
+                                      None, None, None, None, 
+                                      tiempo_entre_llegadas, proxima_llegada, tiempo_atencion, fin_atencion, 
+                                       None, None))
+            elif evento == "fin_atencion":
+                self.tabla_resultados.append((f"fin_atencion_paciente_{area}", self.reloj, None, None, None, None,
+                                      None, None, None, None,  
+                                      None, None, None, None, 
+                                      None, None, None, None, 
+                                      None, None,  tiempo_atencion, fin_atencion, 
+                                       None, None))
 
     def simular(self):
-        while self.reloj < self.tiempo_total_simulacion:
+        # aca la condicion de simulacion va a ser un parametro N que va a venir de la interfaz y la cantidad de eventos len(tabla_resultaodos)
+        while len(self.tabla_resultados) < self.cantidad_eventos_a_simular:
             # Ordenar eventos por tiempo
             self.eventos.sort(key=lambda evento: evento[1])
             if len(self.eventos) > 0:
@@ -130,35 +205,36 @@ class SimulacionCentroSalud:
         # Se crea el nuevo cliente
         nuevo_paciente = Paciente(self.reloj)
 
+        # Programo la próxima llegada de paciente
+        tiempo_entre_llegadas = generar_tiempo_entre_llegadas(area_atencion.media_llegada)
+        proxima_llegada = self.reloj + tiempo_entre_llegadas
+        self.eventos.append((f"llegada_paciente_{area_atencion.nombre}", proxima_llegada))
+
+        atendido = False
+
         #recorro los medicos del area
         for medico in area_atencion.medicos:
 
             if medico.estado == "libre":
                 # Si el medico está libre, atiende al paciente (calcula tiempo atencion)
-                paciente_atendido = nuevo_paciente
-                paciente_atendido.estado = "siendo_atendido"
-                paciente_atendido.tiempo_inicio_atencion = self.reloj
+                nuevo_paciente.estado = "siendo_atendido"
+                nuevo_paciente.tiempo_inicio_atencion = self.reloj
+                nuevo_paciente.medico_asignado = medico
                 tiempo_atencion = generar_tiempo_atencion(area_atencion.media_atencion)
                 fin_atencion = self.reloj + tiempo_atencion
                 self.eventos.append((f"fin_atencion_paciente_{area_atencion.nombre}", fin_atencion))
                 medico.estado = "atendiendo"
+                area_atencion.agregar_paciente_atendido(nuevo_paciente)
+                atendido = True
+                break
 
-                # para anotar en la tabla de resultados y los eventos, hacer una busqueda segun el tipo para manejar bien los eventos
-                self.tabla_resultados.append((f"llegada_paciente{area_atencion.nombre}", self.reloj, None, None,self.medico.estado, len(self.medico.cola), tiempo_atencion, fin_atencion))
-
-            elif medico.estado == "atendiendo":
-                # Si está atendiendo a alguien, lo mete en la cola y no calcula tiempo de atencion ni nada
+        if not atendido:
+                # Si no se pudo atender al paciente porque todos los medicos del area estaban ocupados, lo mete en la cola y no calcula tiempo de atencion ni nada
                 area_atencion.cola_area.append(nuevo_paciente)
-                self.tabla_resultados.append((f"llegada_paciente{area_atencion.nombre}", self.reloj, None, None,self.medico.estado, len(self.medico.cola), None, None))
+                tiempo_atencion = None
+                fin_atencion = None
+        self.escribir_fila_tabla_resultados(area_atencion.nombre, "llegada", tiempo_entre_llegadas, proxima_llegada, tiempo_atencion, fin_atencion)
 
-        # Programo la próxima llegada de paciente
-        tiempo_entre_llegadas = generar_tiempo_entre_llegadas(area_atencion.media_llegadas)
-        proxima_llegada = self.reloj + tiempo_entre_llegadas
-        self.eventos.append((f"llegada_paciente{area_atencion.nombre}", proxima_llegada))
-
-        # aca se actualiza o sobreescribe la entrada que se agrego recien en los if de arriba, para agregar la proxima llegada
-        ultimo_resultado = self.tabla_resultados[-1]
-        self.tabla_resultados[-1] = (ultimo_resultado[0], ultimo_resultado[1], tiempo_entre_llegadas, proxima_llegada,self.medico.estado, len(self.medico.cola), ultimo_resultado[6], ultimo_resultado[7])
 
     def procesar_fin_atencion_paciente(self, nombre_area):
         # busco el area
@@ -166,12 +242,23 @@ class SimulacionCentroSalud:
             if nombre_area == a.nombre:
                  area_atencion = a
 
-        # Procesar la finalización de atención de un cliente
+         # Encontrar el paciente que acaba de terminar su atención
+        paciente_atendido = next((p for p in area_atencion.pacientes_atendidos if p.estado == "siendo_atendido"), None)
+        if paciente_atendido is None:
+            return
+        
+        # Liberar al médico que atendió al paciente
+        medico = paciente_atendido.medico_asignado
+        if medico is not None:
+            medico.estado = "libre"
+            #paciente_atendido.estado = "atendido"
+
+        area_atencion.quitar_paciente_atendido(paciente_atendido)
+
+        # actualizar las estadísticas
         self.pacientes_atendidos += 1
-        paciente_atendido = area_atencion.cola_area[0] if area_atencion.cola_area else None
-        if paciente_atendido:
-            paciente_atendido.tiempo_salida = self.reloj
-            self.tiempo_permanencia_total += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso)
+        paciente_atendido.tiempo_salida = self.reloj
+        self.tiempo_permanencia_total += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso)
 
         if len(area_atencion.cola_area) > 0:
             # Atender al siguiente cliente en la cola
@@ -179,18 +266,16 @@ class SimulacionCentroSalud:
             siguiente_paciente = area_atencion.cola_area.pop(0)
             siguiente_paciente.estado = "siendo_atendido"
             siguiente_paciente.tiempo_inicio_atencion = self.reloj
+            siguiente_paciente.medico_asignado = medico
             tiempo_atencion = generar_tiempo_atencion(area_atencion.media_atencion)
             fin_atencion = self.reloj + tiempo_atencion
             self.eventos.append((f"fin_atencion_paciente_{area_atencion.nombre}", fin_atencion))
-
-            self.tabla_resultados.append((f"fin_atencion_paciente_{area_atencion.nombre}", self.reloj, None, None,self.medico.estado, len(self.medico.cola), tiempo_atencion, fin_atencion))
-
+            medico.estado = "atendiendo"
+            self.escribir_fila_tabla_resultados(area_atencion.nombre, "llegada", None, None, tiempo_atencion, fin_atencion)
             
         else:
-            self.medico.estado = "libre"
-            self.tabla_resultados.append((f"fin_atencion_paciente_{area_atencion.nombre}", self.reloj, None, None,self.medico.estado, len(self.medico.cola), None, None))
+            self.escribir_fila_tabla_resultados(area_atencion.nombre, "fin_atencion", None, None, None, None)
             
-
     def calcular_t_espera(self):
         if self.pacientes_atendidos > 0:
             tiempo_espera_promedio = self.tiempo_permanencia_total / self.pacientes_atendidos
@@ -202,7 +287,7 @@ class VentanaSimulacion(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle('Simulación de Peluquería')
+        self.setWindowTitle('Simulación Centro de Salud')
         self.setGeometry(100, 100, 1200, 600)
 
         self.layout = QVBoxLayout()
@@ -222,7 +307,7 @@ class VentanaSimulacion(QWidget):
     def iniciar_simulacion(self):
         simulacion = SimulacionCentroSalud()
         simulacion.inicializar()
-        #simulacion.simular()
+        simulacion.simular()
 
         self.mostrar_resultados(simulacion.tabla_resultados)
 
@@ -235,6 +320,7 @@ class VentanaSimulacion(QWidget):
         self.llenar_tabla(tabla_widget, tabla_resultados)
 
     def llenar_tabla(self, tabla, tabla_resultados):
+        # aca voy a tener q modificarlo me parece que la len va a ser fija 300
         tabla.setRowCount(len(tabla_resultados))
         encabezado_tabla = ['Evento', 'Reloj', 'Tiempo entre Llegadas', 'Próxima Llegada Consulta', 'Tiempo de Atención', 'Fin de Atención Consulta',
                                          'Tiempo entre Llegadas', 'Próxima Llegada Odontologia', 'Tiempo de Atención', 'Fin de Atención Odont.',
