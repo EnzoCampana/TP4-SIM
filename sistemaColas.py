@@ -10,11 +10,14 @@ class Area:
         self.cola_area = []
         self.media_llegada = media_llegada
         self.media_atencion = media_atencion
+
+        self.medicos = [Medico(i) for i in range(cantidad_especialistas)]
         
         self.pacientes_atendidos = 0
 
 class Medico:
-    def __init__(self):
+    def __init__(self, id):
+        self.id = id
         self.estado = "libre"  # "libre" o "atendiendo"
 
 class Paciente:
@@ -38,14 +41,21 @@ def generar_tiempo_atencion(media):
 class SimulacionCentroSalud:
     def __init__(self):
         self.reloj = 0
-        self.tiempo_total_simulacion = 60
-
-        self.media_llegadas = 8
+        self.tiempo_total_simulacion = 0
         self.eventos = []
         # crear las areas
+        self.areas = []
+        self.nombre_areas = ["consulta", "ondontologia", "pediatria", "laboratorio", "farmacia"]
+        self.especialistas_por_area = [5, 3, 2, 4, 2]
+        self.media_llegadas_area = [30, 12, 10, 20, 25]
+        self.media_atencion_area = [6, 4, 5, 8, 15]
 
-        # crear medicos por cada area
-        self.medico = Medico()
+        for i in range(len(self.nombre_areas)):
+            self.areas.append(Area(self.nombre_areas[i],
+                              self.especialistas_por_area[i],
+                              self.media_llegadas_area[i],
+                              self.media_atencion_area[i]))
+            
         # estos datos son para calcular los estadisticos q pide
         self.pacientes_atendidos = 0
         self.tiempo_permanencia_total = 0
@@ -53,11 +63,29 @@ class SimulacionCentroSalud:
         self.tabla_resultados = []  # evento, reloj, 
 
     def inicializar(self):
-        tiempo_primera_llegada = generar_tiempo_entre_llegadas(self.media_llegadas)
-        #aca hago un append de todos las llegadas de las areas
+        primeras_llegadas = [] #0consulta 1odont 2ped 3lab 4farm
+        for area in self.areas:
+            tiempo_primera_llegada = generar_tiempo_entre_llegadas(area.media_llegada)
+            self.eventos.append((f"llegada_paciente_{area.nombre}", tiempo_primera_llegada))
+            primeras_llegadas.append(tiempo_primera_llegada)
+        self.tabla_resultados.append(("inicializacion", self.reloj, primeras_llegadas[0], primeras_llegadas[0], None, None,
+                                      primeras_llegadas[1], primeras_llegadas[1], None, None,  
+                                      primeras_llegadas[2], primeras_llegadas[2], None, None, 
+                                      primeras_llegadas[3], primeras_llegadas[3], None, None, 
+                                      primeras_llegadas[4], primeras_llegadas[4], None, None, 
+                                       None, None))
         
-        self.eventos.append(("llegada_cliente", tiempo_primera_llegada))
-        self.tabla_resultados.append(("inicializacion", self.reloj, tiempo_primera_llegada, tiempo_primera_llegada ,self.medico.estado, len(self.medico.cola), None, None ))
+    def escribir_fila_tabla_resultados(self, area):
+        if area == "consulta":
+            pass
+        elif area == "ondontologia":
+            pass
+        elif area == "pediatria":
+            pass
+        elif area == "laboratorio":
+            pass
+        elif area == "farmacia":
+            pass
 
     def simular(self):
         while self.reloj < self.tiempo_total_simulacion:
@@ -69,85 +97,98 @@ class SimulacionCentroSalud:
                 tipo_evento = evento_actual[0]
 
                 if tipo_evento == "llegada_paciente_consulta":
-                    self.procesar_llegada_paciente()
+                    self.procesar_llegada_paciente("consulta")
                 elif tipo_evento == "fin_atencion_paciente_consulta":
-                    self.procesar_fin_atencion_paciente()
+                    self.procesar_fin_atencion_paciente("consulta")
 
                 elif tipo_evento == "llegada_paciente_odontologia":
-                    self.procesar_llegada_paciente()
+                    self.procesar_llegada_paciente("odontologia")
                 elif tipo_evento == "fin_atencion_paciente_odontologia":
-                    self.procesar_fin_atencion_paciente()
+                    self.procesar_fin_atencion_paciente("odontologia")
 
                 elif tipo_evento == "llegada_paciente_pediatria":
-                    self.procesar_llegada_paciente()
+                    self.procesar_llegada_paciente("pediatria")
                 elif tipo_evento == "fin_atencion_paciente_pediatria":
-                    self.procesar_fin_atencion_paciente()
+                    self.procesar_fin_atencion_paciente("pediatria")
 
                 elif tipo_evento == "llegada_paciente_laboratorio":
-                    self.procesar_llegada_paciente()
+                    self.procesar_llegada_paciente("laboratorio")
                 elif tipo_evento == "fin_atencion_paciente_laboratorio":
-                    self.procesar_fin_atencion_paciente()
+                    self.procesar_fin_atencion_paciente("laboratorio")
 
                 elif tipo_evento == "llegada_paciente_farmacia":
-                    self.procesar_llegada_paciente()
+                    self.procesar_llegada_paciente("farmacia")
                 elif tipo_evento == "fin_atencion_paciente_farmacia":
-                    self.procesar_fin_atencion_paciente()
+                    self.procesar_fin_atencion_paciente("farmacia")
 
-    def procesar_llegada_paciente(self):
+    def procesar_llegada_paciente(self, nombre_area):
+        # busco el area
+        for a in self.areas:
+            if nombre_area == a.nombre:
+                 area_atencion = a
+
         # Se crea el nuevo cliente
         nuevo_paciente = Paciente(self.reloj)
 
-        if self.medico.estado == "libre":
-            # Si la medico está libre, atiende al cliente (calcula tiempo atencion)
-            paciente_atendido = nuevo_paciente
-            paciente_atendido.estado = "siendo_atendido"
-            paciente_atendido.tiempo_inicio_atencion = self.reloj
-            tiempo_atencion = generar_tiempo_atencion()
-            fin_atencion = self.reloj + tiempo_atencion
-            self.eventos.append(("fin_atencion_cliente", fin_atencion))
-            self.medico.estado = "atendiendo"
+        #recorro los medicos del area
+        for medico in area_atencion.medicos:
 
-            # para anotar en la tabla de resultados y los eventos, hacer una busqueda segun el tipo para manejar bien los eventos
-            self.tabla_resultados.append(("llegada_cliente", self.reloj, None, None,self.medico.estado, len(self.medico.cola), tiempo_atencion, fin_atencion))
+            if medico.estado == "libre":
+                # Si el medico está libre, atiende al paciente (calcula tiempo atencion)
+                paciente_atendido = nuevo_paciente
+                paciente_atendido.estado = "siendo_atendido"
+                paciente_atendido.tiempo_inicio_atencion = self.reloj
+                tiempo_atencion = generar_tiempo_atencion(area_atencion.media_atencion)
+                fin_atencion = self.reloj + tiempo_atencion
+                self.eventos.append((f"fin_atencion_paciente_{area_atencion.nombre}", fin_atencion))
+                medico.estado = "atendiendo"
 
-        elif self.medico.estado == "atendiendo":
-            # Si está atendiendo a alguien, lo mete en la cola y no calcula tiempo de atencion ni nada
-            self.medico.cola.append(nuevo_paciente)
-            self.tabla_resultados.append(("llegada_cliente", self.reloj, None, None,self.medico.estado, len(self.medico.cola), None, None))
+                # para anotar en la tabla de resultados y los eventos, hacer una busqueda segun el tipo para manejar bien los eventos
+                self.tabla_resultados.append((f"llegada_paciente{area_atencion.nombre}", self.reloj, None, None,self.medico.estado, len(self.medico.cola), tiempo_atencion, fin_atencion))
 
-        # Programo la próxima llegada de cliente
-        tiempo_entre_llegadas = generar_tiempo_entre_llegadas(self.media_llegadas)
+            elif medico.estado == "atendiendo":
+                # Si está atendiendo a alguien, lo mete en la cola y no calcula tiempo de atencion ni nada
+                area_atencion.cola_area.append(nuevo_paciente)
+                self.tabla_resultados.append((f"llegada_paciente{area_atencion.nombre}", self.reloj, None, None,self.medico.estado, len(self.medico.cola), None, None))
+
+        # Programo la próxima llegada de paciente
+        tiempo_entre_llegadas = generar_tiempo_entre_llegadas(area_atencion.media_llegadas)
         proxima_llegada = self.reloj + tiempo_entre_llegadas
-        self.eventos.append(("llegada_cliente", proxima_llegada))
+        self.eventos.append((f"llegada_paciente{area_atencion.nombre}", proxima_llegada))
 
         # aca se actualiza o sobreescribe la entrada que se agrego recien en los if de arriba, para agregar la proxima llegada
         ultimo_resultado = self.tabla_resultados[-1]
         self.tabla_resultados[-1] = (ultimo_resultado[0], ultimo_resultado[1], tiempo_entre_llegadas, proxima_llegada,self.medico.estado, len(self.medico.cola), ultimo_resultado[6], ultimo_resultado[7])
 
-    def procesar_fin_atencion_paciente(self):
+    def procesar_fin_atencion_paciente(self, nombre_area):
+        # busco el area
+        for a in self.areas:
+            if nombre_area == a.nombre:
+                 area_atencion = a
+
         # Procesar la finalización de atención de un cliente
         self.pacientes_atendidos += 1
-        paciente_atendido = self.medico.cola[0] if self.medico.cola else None
+        paciente_atendido = area_atencion.cola_area[0] if area_atencion.cola_area else None
         if paciente_atendido:
             paciente_atendido.tiempo_salida = self.reloj
             self.tiempo_permanencia_total += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso)
 
-        if len(self.medico.cola) > 0:
+        if len(area_atencion.cola_area) > 0:
             # Atender al siguiente cliente en la cola
             
-            siguiente_paciente = self.medico.cola.pop(0)
+            siguiente_paciente = area_atencion.cola_area.pop(0)
             siguiente_paciente.estado = "siendo_atendido"
             siguiente_paciente.tiempo_inicio_atencion = self.reloj
-            tiempo_atencion = generar_tiempo_atencion()
+            tiempo_atencion = generar_tiempo_atencion(area_atencion.media_atencion)
             fin_atencion = self.reloj + tiempo_atencion
-            self.eventos.append(("fin_atencion_cliente", fin_atencion))
+            self.eventos.append((f"fin_atencion_paciente_{area_atencion.nombre}", fin_atencion))
 
-            self.tabla_resultados.append(("fin_atencion_cliente", self.reloj, None, None,self.medico.estado, len(self.medico.cola), tiempo_atencion, fin_atencion))
+            self.tabla_resultados.append((f"fin_atencion_paciente_{area_atencion.nombre}", self.reloj, None, None,self.medico.estado, len(self.medico.cola), tiempo_atencion, fin_atencion))
 
             
         else:
             self.medico.estado = "libre"
-            self.tabla_resultados.append(("fin_atencion_cliente", self.reloj, None, None,self.medico.estado, len(self.medico.cola), None, None))
+            self.tabla_resultados.append((f"fin_atencion_paciente_{area_atencion.nombre}", self.reloj, None, None,self.medico.estado, len(self.medico.cola), None, None))
             
 
     def calcular_t_espera(self):
@@ -181,10 +222,12 @@ class VentanaSimulacion(QWidget):
     def iniciar_simulacion(self):
         simulacion = SimulacionCentroSalud()
         simulacion.inicializar()
-        simulacion.simular()
+        #simulacion.simular()
 
         self.mostrar_resultados(simulacion.tabla_resultados)
-        self.mostrar_tiempo_espera(simulacion.calcular_t_espera())
+
+        # despues vemos bien lo que necesitamos calcular y mostrar
+        #self.mostrar_tiempo_espera(simulacion.calcular_t_espera())
 
     def mostrar_resultados(self, tabla_resultados):
         tabla_widget = QTableWidget()
@@ -193,19 +236,20 @@ class VentanaSimulacion(QWidget):
 
     def llenar_tabla(self, tabla, tabla_resultados):
         tabla.setRowCount(len(tabla_resultados))
-        tabla.setColumnCount(8)
-        tabla.setHorizontalHeaderLabels(['Evento', 'Reloj', 'Tiempo entre Llegadas', 'Próxima Llegada',  'Estado Peluquera', 'Personas en Cola', 'Tiempo de Atención', 'Fin de Atención'])
+        encabezado_tabla = ['Evento', 'Reloj', 'Tiempo entre Llegadas', 'Próxima Llegada Consulta', 'Tiempo de Atención', 'Fin de Atención Consulta',
+                                         'Tiempo entre Llegadas', 'Próxima Llegada Odontologia', 'Tiempo de Atención', 'Fin de Atención Odont.',
+                                         'Tiempo entre Llegadas', 'Próxima Llegada Pediatria', 'Tiempo de Atención', 'Fin de Atención Ped.',
+                                         'Tiempo entre Llegadas', 'Próxima Llegada Laboratorio', 'Tiempo de Atención', 'Fin de Atención Lab.',
+                                         'Tiempo entre Llegadas', 'Próxima Llegada Farmacia', 'Tiempo de Atención', 'Fin de Atención Farmacia', 'Toma Servicio', 'Tiempo de Atencion SS', 'Fin de Atencion SS']
+        tabla.setColumnCount(len(encabezado_tabla))
+        tabla.setHorizontalHeaderLabels(encabezado_tabla)
 
         for i, resultado in enumerate(tabla_resultados):
-            tabla.setItem(i, 0, QTableWidgetItem(resultado[0]))
-            tabla.setItem(i, 1, QTableWidgetItem(f"{resultado[1]:.2f}" if resultado[1] is not None else ""))
-            tabla.setItem(i, 2, QTableWidgetItem(f"{resultado[2]:.2f}" if resultado[2] is not None else ""))
-            tabla.setItem(i, 3, QTableWidgetItem(f"{resultado[3]:.2f}" if resultado[3] is not None else ""))
-            tabla.setItem(i, 4, QTableWidgetItem(resultado[4]))
-            tabla.setItem(i, 5, QTableWidgetItem(str(resultado[5])))
-            tabla.setItem(i, 6, QTableWidgetItem(f"{resultado[6]:.2f}" if resultado[6] is not None else ""))
-            tabla.setItem(i, 7, QTableWidgetItem(f"{resultado[7]:.2f}" if resultado[7] is not None else ""))
-            
+            for j, valor in enumerate(resultado):
+                if valor is not None:
+                    tabla.setItem(i, j, QTableWidgetItem(f"{valor:.2f}" if isinstance(valor, (int, float)) else str(valor)))
+                else:
+                    tabla.setItem(i, j, QTableWidgetItem(""))
 
     def mostrar_tiempo_espera(self, resultados_finales):
         pacientes_atendidos, tiempo_espera_promedio = resultados_finales
