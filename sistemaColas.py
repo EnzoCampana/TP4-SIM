@@ -43,12 +43,14 @@ class Paciente:
 
 
 def generar_tiempo_exponencial(lambdaValor):
-    media = 1 / (lambdaValor/60)
+    media = 1 / (lambdaValor / 60)
     return -media * math.log(1 - random.random())
+
 
 def generar_tiempo_entre_llegadas(lambdaValor):
     tiempo_entre_llegadas = generar_tiempo_exponencial(lambdaValor)
     return tiempo_entre_llegadas
+
 
 def generar_tiempo_atencion(lambdaValor):
     tiempo_atencion = generar_tiempo_exponencial(lambdaValor)
@@ -56,7 +58,8 @@ def generar_tiempo_atencion(lambdaValor):
 
 
 class SimulacionCentroSalud:
-    def __init__(self, lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5, lambda6, lambda7, lambda8, lambda9, lambda10):
+    def __init__(self, lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5, lambda6, lambda7, lambda8,
+                 lambda9, lambda10):
 
         self.reloj = 0
         self.eventos = []
@@ -213,13 +216,14 @@ class SimulacionCentroSalud:
         lista = self.diccionario_vector()
         self.tabla_resultados.append(lista)
         self.nro_evento_simulado += 1
-        
 
+    ###################
     def escribir_fila_tabla_resultados(self, area, evento, tiempo_entre_llegadas, proxima_llegada, tiempo_atencion,
                                        fin_atencion,
                                        pacientes_atendido_consulta, pacientes_atendidos_odontolo,
                                        pacientes_atendidos_pediatr,
-                                       pacientes_atendidos_laborator, pacientes_atendidos_farm):
+                                       pacientes_atendidos_laborator, pacientes_atendidos_farm, mostrar_desde,
+                                       nro_evento_simulado, lineas):
         evento_map = {
             "consulta": ("llegada_paciente_consulta", "Fin atencion consulta"),
             "odontologia": ("llegada_paciente_odontologia", "Fin atencion odontologia"),
@@ -232,7 +236,6 @@ class SimulacionCentroSalud:
             raise ValueError("Área no reconocida")
 
         llegada_evento, fin_atencion_evento = evento_map[area]
-
         # Redondear a 4 decimales
         if tiempo_entre_llegadas is not None:
             tiempo_entre_llegadas = round(tiempo_entre_llegadas, 4)
@@ -244,18 +247,22 @@ class SimulacionCentroSalud:
             self.diccionario[f"llegada paciente {area}"]["Proxima llegada"] = proxima_llegada
 
         elif evento == "fin_atencion":
-            self.diccionario[f"Fin atencion {area}"]["Tiempo atencion"] = tiempo_atencion
-            self.diccionario[f"Fin atencion {area}"]["Fin atencion"] = fin_atencion
+            if tiempo_atencion is not None:
+                self.diccionario[f"Fin atencion {area}"]["Tiempo atencion"] = tiempo_atencion
+                self.diccionario[f"Fin atencion {area}"]["Fin atencion"] = fin_atencion
 
         self.diccionario["Evento"] = llegada_evento if evento == "llegada" else fin_atencion_evento
         self.diccionario["Reloj"] = self.reloj
-        self.diccionario["pacientes_atendido_consulta"] = pacientes_atendido_consulta
-        self.diccionario["pacientes_atendidos_odontolo"] = pacientes_atendidos_odontolo
-        self.diccionario["pacientes_atendidos_pediatr"] = pacientes_atendidos_pediatr
-        self.diccionario["pacientes_atendidos_laborator"] = pacientes_atendidos_laborator
-        self.diccionario["pacientes_atendidos_farm"] = pacientes_atendidos_farm
-        lista = self.diccionario_vector()
-        self.tabla_resultados.append(lista)
+
+        ####
+        self.diccionario["Cola de consultas generales"]["Contador"] = pacientes_atendido_consulta
+        self.diccionario["Cola de odontologia"]["Contador"] = pacientes_atendidos_odontolo
+        self.diccionario["Cola de pediatria"]["Contador"] = pacientes_atendidos_pediatr
+        self.diccionario["Cola de laboratorio"]["Contador"] = pacientes_atendidos_laborator
+        self.diccionario["Cola de farmacia"]["Contador"] = pacientes_atendidos_farm
+        if mostrar_desde <= nro_evento_simulado <= mostrar_desde + 299 or nro_evento_simulado == lineas:
+            lista = self.diccionario_vector()
+            self.tabla_resultados.append(lista)
 
     def simular(self):
         # aca la condicion de simulacion va a ser un parametro N que va a venir de la interfaz y la cantidad de eventos len(tabla_resultaodos)
@@ -263,6 +270,7 @@ class SimulacionCentroSalud:
         for _ in range(self.lineas):
             # Ordenar eventos por tiempo
             self.eventos.sort(key=lambda evento: evento[1])
+
             if len(self.eventos) > 0:
                 evento_actual = self.eventos.pop(0)
                 self.nro_evento_simulado += 1
@@ -351,13 +359,12 @@ class SimulacionCentroSalud:
             self.diccionario[llave]["Cola"] = str(cola)
             area_atencion.cola_area.append(nuevo_paciente)
 
-
-        if self.mostrar_desde <= self.nro_evento_simulado <= self.mostrar_desde + 299 or self.nro_evento_simulado == self.lineas:
-            self.escribir_fila_tabla_resultados(area_atencion.nombre, "llegada", tiempo_entre_llegadas, proxima_llegada,
-                                                tiempo_atencion if atendido else None, fin_atencion if atendido else None,
-                                                self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
-                                                self.pacientes_atendidos_pediatr,
-                                                self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm)
+        self.escribir_fila_tabla_resultados(area_atencion.nombre, "llegada", tiempo_entre_llegadas, proxima_llegada,
+                                            tiempo_atencion if atendido else None, fin_atencion if atendido else None,
+                                            self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
+                                            self.pacientes_atendidos_pediatr,
+                                            self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm,
+                                            self.mostrar_desde, self.nro_evento_simulado, self.lineas)
 
     def buscar_key(self, nombre_area, evento):
         claves_encontradas = [clave for clave in self.diccionario.keys() if
@@ -388,18 +395,29 @@ class SimulacionCentroSalud:
         if nombre_area == "consulta":
             self.pacientes_atendido_consulta += 1
             self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Consulta general")
+            self.diccionario["Cola de consultas generales"]["Tiempo de permanencia"]=self.tiempo_permanencia_totalCons
+            self.diccionario["Tiempo de espera promedio"]["Consulta general"] = self.tiempoEsperaPromedioConsulta
         elif nombre_area == "odontologia":
             self.pacientes_atendidos_odontolo += 1
             self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Odontologia")
+            self.diccionario["Cola de odontologia"]["Tiempo de permanencia"] = self.tiempo_permanencia_totalOdon
+            self.diccionario["Tiempo de espera promedio"]["Odontologia"] = self.tiempoEsperaPromedioOdonto
         elif nombre_area == "pediatria":
             self.pacientes_atendidos_pediatr += 1
             self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Pediatria")
+            self.diccionario["Cola de pediatria"]["Tiempo de permanencia"] = self.tiempo_permanencia_totalPed
+            self.diccionario["Tiempo de espera promedio"]["Pediatria"] = self.tiempoEsperaPromedioPedia
         elif nombre_area == "laboratorio":
             self.pacientes_atendidos_laborator += 1
             self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Laboratorio")
+            self.diccionario["Cola de laboratorio"]["Tiempo de permanencia"] = self.tiempo_permanencia_totalLab
+            self.diccionario["Tiempo de espera promedio"]["Laboratorio"] = self.tiempoEsperaPromedioLabora
+
         elif nombre_area == "farmacia":
             self.pacientes_atendidos_farm += 1
             self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Farmacia")
+            self.diccionario["Cola de farmacia"]["Tiempo de permanencia"] = self.tiempo_permanencia_totalFarm
+            self.diccionario["Tiempo de espera promedio"]["Farmacia"] = self.tiempoEsperaPromedioFarm
 
         if area_atencion.cola_area:
             siguiente_paciente = area_atencion.cola_area.pop(0)
@@ -422,18 +440,16 @@ class SimulacionCentroSalud:
             self.diccionario[llave][medico_key] = "atendiendo"
 
             ##
-            if self.mostrar_desde <= self.nro_evento_simulado <= self.mostrar_desde + 299 or self.nro_evento_simulado == self.lineas:
-                self.escribir_fila_tabla_resultados(area_atencion.nombre, "fin_atencion", None, None, tiempo_atencion,
-                                                    fin_atencion,
-                                                    self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
-                                                    self.pacientes_atendidos_pediatr,
-                                                    self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm)
+            self.escribir_fila_tabla_resultados(area_atencion.nombre, "fin_atencion", None, None, tiempo_atencion,
+                                                fin_atencion,
+                                                self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
+                                                self.pacientes_atendidos_pediatr,
+                                                self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm,self.mostrar_desde, self.nro_evento_simulado, self.lineas)
         else:
-            if self.mostrar_desde <= self.nro_evento_simulado <= self.mostrar_desde + 299 or self.nro_evento_simulado == self.lineas:
-                self.escribir_fila_tabla_resultados(area_atencion.nombre, "fin_atencion", None, None, None, None,
-                                                    self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
-                                                    self.pacientes_atendidos_pediatr,
-                                                    self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm)
+            self.escribir_fila_tabla_resultados(area_atencion.nombre, "fin_atencion", None, None, None, None,
+                                                self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
+                                                self.pacientes_atendidos_pediatr,
+                                                self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm,self.mostrar_desde, self.nro_evento_simulado, self.lineas)
 
     def actualizar_tiempo_promedio(self, area_atencion, paciente_atendido, area_nombre):
         paciente_atendido.tiempo_salida = self.reloj
@@ -488,29 +504,30 @@ class SimulacionCentroSalud:
 
         return self.pacientes_atendidos, tiempo_espera_promedio, tiempo_espera_promedioConsulta, tiempo_espera_promedioOdontolo, tiempo_espera_promedioPediatr, tiempo_espera_promedioLaborat, tiempo_espera_promedioFarmaci
 
+
 class VentanaInicial(QWidget):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle('Configuración de la Simulación')
         self.setGeometry(100, 100, 400, 300)
-        
+
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-        
+
         self.layout.addWidget(QLabel('Cantidad de líneas a simular:'))
         self.lineas_entry = QLineEdit()
         self.layout.addWidget(self.lineas_entry)
-        
+
         self.layout.addWidget(QLabel('Mostrar desde la línea:'))
         self.mostrar_desde_entry = QLineEdit()
         self.layout.addWidget(self.mostrar_desde_entry)
-        
+
         self.layout.addWidget(QLabel('Llegada consulta general por hora:'))
         self.lambdaentry1 = QLineEdit()
         self.lambdaentry1.setText('30')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry1)
-        
+
         self.layout.addWidget(QLabel('Llegada odontología por hora:'))
         self.lambdaentry2 = QLineEdit()
         self.lambdaentry2.setText('12')  # Valor predeterminado
@@ -535,7 +552,7 @@ class VentanaInicial(QWidget):
         self.lambdaentry6 = QLineEdit()
         self.lambdaentry6.setText('6')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry6)
-        
+
         self.layout.addWidget(QLabel('Fin atención odontología por hora:'))
         self.lambdaentry7 = QLineEdit()
         self.lambdaentry7.setText('4')  # Valor predeterminado
@@ -555,7 +572,7 @@ class VentanaInicial(QWidget):
         self.lambdaentry10 = QLineEdit()
         self.lambdaentry10.setText('15')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry10)
-        
+
         self.boton_iniciar = QPushButton('Iniciar Simulación')
         self.boton_iniciar.clicked.connect(self.iniciar_simulacion)
         self.layout.addWidget(self.boton_iniciar)
@@ -574,21 +591,24 @@ class VentanaInicial(QWidget):
             lambda8 = float(self.lambdaentry8.text())
             lambda9 = float(self.lambdaentry9.text())
             lambda10 = float(self.lambdaentry10.text())
-            
+
             if mostrar_desde < 0 or mostrar_desde >= lineas:
-                QMessageBox.critical(self, "Error", "La línea de inicio debe estar dentro del rango del total de líneas.")
+                QMessageBox.critical(self, "Error",
+                                     "La línea de inicio debe estar dentro del rango del total de líneas.")
                 return
-            
+
             self.hide()
-            self.ventana_simulacion = VentanaSimulacion(lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5,
+            self.ventana_simulacion = VentanaSimulacion(lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4,
+                                                        lambda5,
                                                         lambda6, lambda7, lambda8, lambda9, lambda10)
             self.ventana_simulacion.show()
         except ValueError:
             QMessageBox.critical(self, "Error", "Por favor, ingrese valores válidos.")
 
+
 class VentanaSimulacion(QWidget):
-    def __init__(self,lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5,
-                                                        lambda6, lambda7, lambda8, lambda9, lambda10):
+    def __init__(self, lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5,
+                 lambda6, lambda7, lambda8, lambda9, lambda10):
         super().__init__()
 
         self.setWindowTitle('Simulación Centro de Salud')
@@ -609,7 +629,7 @@ class VentanaSimulacion(QWidget):
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-        
+
         self.boton_simular = QPushButton('Iniciar Simulación')
         self.boton_simular.clicked.connect(self.iniciar_simulacion)
         self.layout.addWidget(self.boton_simular)
@@ -622,7 +642,9 @@ class VentanaSimulacion(QWidget):
         self.layout.addWidget(self.scroll_area)
 
     def iniciar_simulacion(self):
-        simulacion = SimulacionCentroSalud(self.lineas, self.mostrar_desde, self.lambda1, self.lambda2, self.lambda3, self.lambda4, self.lambda5, self.lambda6, self.lambda7, self.lambda8, self.lambda9, self.lambda10)
+        simulacion = SimulacionCentroSalud(self.lineas, self.mostrar_desde, self.lambda1, self.lambda2, self.lambda3,
+                                           self.lambda4, self.lambda5, self.lambda6, self.lambda7, self.lambda8,
+                                           self.lambda9, self.lambda10)
         simulacion.inicializar()
         simulacion.simular()
 
@@ -633,7 +655,6 @@ class VentanaSimulacion(QWidget):
         tabla_widget = QTableWidget()
         self.tabla_layout.addWidget(tabla_widget)
         self.llenar_tabla(tabla_widget, tabla_resultados)
-
 
     def llenar_tabla(self, tabla, tabla_resultados):
         # Fijar la cantidad de filas en la tabla
@@ -666,10 +687,7 @@ class VentanaSimulacion(QWidget):
             'Cola de Laboratorio.Medico 2', 'Cola de Laboratorio.Medico 3', 'Cola de Laboratorio.Medico 4',
             'Cola de Laboratorio.Cola', 'Cola de Laboratorio.Contador', 'Cola de Laboratorio.Tiempo de permanencia',
             'Cola de Farmacia.Medico 1', 'Cola de Farmacia.Medico 2', 'Cola de Farmacia.Cola',
-            'Cola de Farmacia.Contador', 'Cola de Farmacia.Tiempo de permanencia', 'pacientes_atendido_consulta',
-            "pacientes_atendidos_odontolo", "pacientes_atendidos_pediatr", "pacientes_atendidos_laborator",
-            "pacientes_atendidos_farm"
-        ]
+            'Cola de Farmacia.Contador', 'Cola de Farmacia.Tiempo de permanencia']
 
         # Fijar la cantidad de columnas y sus encabezados
         tabla.setColumnCount(len(encabezado_tabla))
