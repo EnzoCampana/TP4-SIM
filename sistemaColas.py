@@ -59,32 +59,21 @@ def generar_tiempo_atencion(lambdaValor):
 
 class SimulacionCentroSalud:
     def __init__(self, lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5, lambda6, lambda7, lambda8, lambda9, lambda10):
-        self.reloj = 0
 
-        """
         self.reloj = 0
-        self.tiempo_total_simulacion = 60
-        self.cantidad_eventos_a_simular = 300
-        
-        """
-        self.tiempo_total_simulacion = lineas
-        if (lineas - mostrar_desde) < 300:
-            self.cantidad_eventos_a_simular = mostrar_desde + (lineas - mostrar_desde)
-        else:
-
-            self.cantidad_eventos_a_simular = mostrar_desde + 300
-        
         self.eventos = []
+
+        self.nro_evento_simulado = 0
+        self.mostrar_desde = mostrar_desde
+        self.lineas = lineas
+
         # crear las areas
         self.areas = []
         self.nombre_areas = ["consulta", "odontologia", "pediatria", "laboratorio", "farmacia"]
+        # ACA SE PEUDE CAMBIAR LA CANTIDAD DE FARMACEUTICOS PARA EL PUNTO 3 !!!!
         self.especialistas_por_area = [5, 3, 2, 4, 2]
         self.lambda_llegadas_area = [lambda1, lambda2, lambda3, lambda4, lambda5]
         self.lambda_atencion_area = [lambda6, lambda7, lambda8, lambda9, lambda10]
-        """
-        self.lambda_llegadas_area = [30, 12, 10, 20, 25]
-        self.lambda_atencion_area = [6, 4, 5, 8, 15]
-        """
 
         for i in range(len(self.nombre_areas)):
             self.areas.append(Area(self.nombre_areas[i],
@@ -225,7 +214,8 @@ class SimulacionCentroSalud:
         self.diccionario["llegada paciente farmacia"]["Proxima llegada"] = primeras_llegadas[4]
         lista = self.diccionario_vector()
         self.tabla_resultados.append(lista)
-        print(self.diccionario)
+        self.nro_evento_simulado += 1
+        
 
     def escribir_fila_tabla_resultados(self, area, evento, tiempo_entre_llegadas, proxima_llegada, tiempo_atencion,
                                        fin_atencion,
@@ -268,21 +258,21 @@ class SimulacionCentroSalud:
         self.diccionario["pacientes_atendidos_farm"] = pacientes_atendidos_farm
         lista = self.diccionario_vector()
         self.tabla_resultados.append(lista)
-        print(lista)
 
     def simular(self):
         # aca la condicion de simulacion va a ser un parametro N que va a venir de la interfaz y la cantidad de eventos len(tabla_resultaodos)
-        while len(self.tabla_resultados) < self.tiempo_total_simulacion:
+        # for i in range(lineas_a_simular)
+        for _ in range(self.lineas):
             # Ordenar eventos por tiempo
             self.eventos.sort(key=lambda evento: evento[1])
             if len(self.eventos) > 0:
                 evento_actual = self.eventos.pop(0)
+                self.nro_evento_simulado += 1
                 self.reloj = evento_actual[1]
                 tipo_evento = evento_actual[0]
 
                 if tipo_evento == "llegada_paciente_consulta":
                     self.procesar_llegada_paciente("consulta")
-
 
                 elif tipo_evento == "fin_atencion_paciente_consulta":
                     self.procesar_fin_atencion_paciente("consulta")
@@ -293,20 +283,17 @@ class SimulacionCentroSalud:
                 elif tipo_evento == "fin_atencion_paciente_odontologia":
                     self.procesar_fin_atencion_paciente("odontologia")
 
-
                 elif tipo_evento == "llegada_paciente_pediatria":
                     self.procesar_llegada_paciente("pediatria")
-                    print(self.diccionario)
+
                 elif tipo_evento == "fin_atencion_paciente_pediatria":
                     self.procesar_fin_atencion_paciente("pediatria")
-                    print(self.diccionario)
 
                 elif tipo_evento == "llegada_paciente_laboratorio":
                     self.procesar_llegada_paciente("laboratorio")
 
                 elif tipo_evento == "fin_atencion_paciente_laboratorio":
                     self.procesar_fin_atencion_paciente("laboratorio")
-
 
                 elif tipo_evento == "llegada_paciente_farmacia":
                     self.procesar_llegada_paciente("farmacia")
@@ -366,11 +353,13 @@ class SimulacionCentroSalud:
             self.diccionario[llave]["Cola"] = str(cola)
             area_atencion.cola_area.append(nuevo_paciente)
 
-        self.escribir_fila_tabla_resultados(area_atencion.nombre, "llegada", tiempo_entre_llegadas, proxima_llegada,
-                                            tiempo_atencion if atendido else None, fin_atencion if atendido else None,
-                                            self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
-                                            self.pacientes_atendidos_pediatr,
-                                            self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm)
+
+        if self.mostrar_desde <= self.nro_evento_simulado <= self.mostrar_desde + 300 or self.nro_evento_simulado == self.lineas:
+            self.escribir_fila_tabla_resultados(area_atencion.nombre, "llegada", tiempo_entre_llegadas, proxima_llegada,
+                                                tiempo_atencion if atendido else None, fin_atencion if atendido else None,
+                                                self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
+                                                self.pacientes_atendidos_pediatr,
+                                                self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm)
 
     def buscar_key(self, nombre_area, evento):
         claves_encontradas = [clave for clave in self.diccionario.keys() if
@@ -435,16 +424,19 @@ class SimulacionCentroSalud:
             medico_key = "Medico " + str(1 + medico.id)
             self.diccionario[llave][medico_key] = "atendiendo"
 
-            self.escribir_fila_tabla_resultados(area_atencion.nombre, "fin_atencion", None, None, tiempo_atencion,
-                                                fin_atencion,
-                                                self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
-                                                self.pacientes_atendidos_pediatr,
-                                                self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm)
+            ##
+            if self.mostrar_desde <= self.nro_evento_simulado <= self.mostrar_desde + 300 or self.nro_evento_simulado == self.lineas:
+                self.escribir_fila_tabla_resultados(area_atencion.nombre, "fin_atencion", None, None, tiempo_atencion,
+                                                    fin_atencion,
+                                                    self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
+                                                    self.pacientes_atendidos_pediatr,
+                                                    self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm)
         else:
-            self.escribir_fila_tabla_resultados(area_atencion.nombre, "fin_atencion", None, None, None, None,
-                                                self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
-                                                self.pacientes_atendidos_pediatr,
-                                                self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm)
+            if self.mostrar_desde <= self.nro_evento_simulado <= self.mostrar_desde + 300 or self.nro_evento_simulado == self.lineas:
+                self.escribir_fila_tabla_resultados(area_atencion.nombre, "fin_atencion", None, None, None, None,
+                                                    self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
+                                                    self.pacientes_atendidos_pediatr,
+                                                    self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm)
 
     def actualizar_tiempo_promedio(self, area_atencion, paciente_atendido, area_nombre):
         paciente_atendido.tiempo_salida = self.reloj
