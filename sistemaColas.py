@@ -2,7 +2,7 @@ import sys
 import random
 import math
 from PyQt5.QtWidgets import QApplication, QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QHBoxLayout, QWidget, \
-    QPushButton, QScrollArea
+    QPushButton, QScrollArea, QMessageBox, QLineEdit
 from PyQt5.QtGui import QColor
 import sys
 
@@ -42,38 +42,44 @@ class Paciente:
         self.medico_asignado = None
 
 
-def generar_tiempo_exponencial(media):
+def generar_tiempo_exponencial(lambdaValor):
+    media = 1 / lambdaValor
     return -media * math.log(1 - random.random())
 
 
-def generar_tiempo_entre_llegadas(media):
-    tiempo_entre_llegadas = generar_tiempo_exponencial(media)
+def generar_tiempo_entre_llegadas(lambdaValor):
+    tiempo_entre_llegadas = generar_tiempo_exponencial(lambdaValor)
     return tiempo_entre_llegadas
 
 
-def generar_tiempo_atencion(media):
-    tiempo_atencion = generar_tiempo_exponencial(media)
+def generar_tiempo_atencion(lambdaValor):
+    tiempo_atencion = generar_tiempo_exponencial(lambdaValor)
     return tiempo_atencion
 
 
 class SimulacionCentroSalud:
-    def __init__(self):
+    def __init__(self, lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5, lambda6, lambda7, lambda8, lambda9, lambda10):
         self.reloj = 0
-        self.tiempo_total_simulacion = 60
-        self.cantidad_eventos_a_simular = 300
+        self.tiempo_total_simulacion = lineas
+        if (lineas - mostrar_desde) < 300:
+            self.cantidad_eventos_a_simular = mostrar_desde + (lineas - mostrar_desde)
+        else:
+
+            self.cantidad_eventos_a_simular = mostrar_desde + 300
+        
         self.eventos = []
         # crear las areas
         self.areas = []
         self.nombre_areas = ["consulta", "odontologia", "pediatria", "laboratorio", "farmacia"]
         self.especialistas_por_area = [5, 3, 2, 4, 2]
-        self.media_llegadas_area = [30, 12, 10, 20, 25]
-        self.media_atencion_area = [6, 4, 5, 8, 15]
+        self.lambda_llegadas_area = [lambda1, lambda2, lambda3, lambda4, lambda5]
+        self.lambda_atencion_area = [lambda6, lambda7, lambda8, lambda9, lambda10]
 
         for i in range(len(self.nombre_areas)):
             self.areas.append(Area(self.nombre_areas[i],
                                    self.especialistas_por_area[i],
-                                   self.media_llegadas_area[i],
-                                   self.media_atencion_area[i]))
+                                   self.lambda_llegadas_area[i],
+                                   self.lambda_atencion_area[i]))
 
         # estos datos son para calcular los estadisticos q pide
         self.pacientes_atendidos = 0
@@ -255,7 +261,7 @@ class SimulacionCentroSalud:
 
     def simular(self):
         # aca la condicion de simulacion va a ser un parametro N que va a venir de la interfaz y la cantidad de eventos len(tabla_resultaodos)
-        while len(self.tabla_resultados) < self.cantidad_eventos_a_simular:
+        while len(self.tabla_resultados) < self.tiempo_total_simulacion:
             # Ordenar eventos por tiempo
             self.eventos.sort(key=lambda evento: evento[1])
             if len(self.eventos) > 0:
@@ -482,17 +488,119 @@ class SimulacionCentroSalud:
 
         return self.pacientes_atendidos, tiempo_espera_promedio, tiempo_espera_promedioConsulta, tiempo_espera_promedioOdontolo, tiempo_espera_promedioPediatr, tiempo_espera_promedioLaborat, tiempo_espera_promedioFarmaci
 
+class VentanaInicial(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle('Configuración de la Simulación')
+        self.setGeometry(100, 100, 400, 300)
+        
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        
+        self.layout.addWidget(QLabel('Cantidad de líneas a simular:'))
+        self.lineas_entry = QLineEdit()
+        self.layout.addWidget(self.lineas_entry)
+        
+        self.layout.addWidget(QLabel('Mostrar desde la línea:'))
+        self.mostrar_desde_entry = QLineEdit()
+        self.layout.addWidget(self.mostrar_desde_entry)
+        
+        self.layout.addWidget(QLabel('Llegada consulta general por hora:'))
+        self.lambdaentry1 = QLineEdit()
+        self.layout.addWidget(self.lambdaentry1)
+        
+        self.layout.addWidget(QLabel('Llegada odontologia por hora:'))
+        self.lambdaentry2 = QLineEdit()
+        self.layout.addWidget(self.lambdaentry2)
+
+        self.layout.addWidget(QLabel('Llegada pediatria por hora:'))
+        self.lambdaentry3 = QLineEdit()
+        self.layout.addWidget(self.lambdaentry3)
+
+        self.layout.addWidget(QLabel('Llegada laboratorio por hora:'))
+        self.lambdaentry4 = QLineEdit()
+        self.layout.addWidget(self.lambdaentry4)
+
+        self.layout.addWidget(QLabel('Llegada farmacia por hora:'))
+        self.lambdaentry5 = QLineEdit()
+        self.layout.addWidget(self.lambdaentry5)
+
+        self.layout.addWidget(QLabel('Fin atención consulta general por hora:'))
+        self.lambdaentry6 = QLineEdit()
+        self.layout.addWidget(self.lambdaentry6)
+        
+        self.layout.addWidget(QLabel('Fin atención odontología por hora:'))
+        self.lambdaentry7 = QLineEdit()
+        self.layout.addWidget(self.lambdaentry7)
+
+        self.layout.addWidget(QLabel('Fin atención pediatría por hora:'))
+        self.lambdaentry8 = QLineEdit()
+        self.layout.addWidget(self.lambdaentry8)
+
+        self.layout.addWidget(QLabel('Fin atención laboratorio por hora:'))
+        self.lambdaentry9 = QLineEdit()
+        self.layout.addWidget(self.lambdaentry9)
+
+        self.layout.addWidget(QLabel('Fin atención farmacia por hora:'))
+        self.lambdaentry10 = QLineEdit()
+        self.layout.addWidget(self.lambdaentry10)
+        
+        self.boton_iniciar = QPushButton('Iniciar Simulación')
+        self.boton_iniciar.clicked.connect(self.iniciar_simulacion)
+        self.layout.addWidget(self.boton_iniciar)
+
+    def iniciar_simulacion(self):
+        try:
+            lineas = int(self.lineas_entry.text())
+            mostrar_desde = int(self.mostrar_desde_entry.text())
+            lambda1 = float(self.lambdaentry1.text())
+            lambda2 = float(self.lambdaentry2.text())
+            lambda3 = float(self.lambdaentry3.text())
+            lambda4 = float(self.lambdaentry4.text())
+            lambda5 = float(self.lambdaentry5.text())
+            lambda6 = float(self.lambdaentry6.text())
+            lambda7 = float(self.lambdaentry7.text())
+            lambda8 = float(self.lambdaentry8.text())
+            lambda9 = float(self.lambdaentry9.text())
+            lambda10 = float(self.lambdaentry10.text())
+            
+            if mostrar_desde < 0 or mostrar_desde >= lineas:
+                QMessageBox.critical(self, "Error", "La línea de inicio debe estar dentro del rango del total de líneas.")
+                return
+            
+            self.hide()
+            self.ventana_simulacion = VentanaSimulacion(lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5,
+                                                        lambda6, lambda7, lambda8, lambda9, lambda10)
+            self.ventana_simulacion.show()
+        except ValueError:
+            QMessageBox.critical(self, "Error", "Por favor, ingrese valores válidos.")
+
 
 class VentanaSimulacion(QWidget):
-    def __init__(self):
+    def __init__(self,lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5,
+                                                        lambda6, lambda7, lambda8, lambda9, lambda10):
         super().__init__()
 
         self.setWindowTitle('Simulación Centro de Salud')
         self.setGeometry(100, 100, 1200, 600)
 
+        self.lineas = lineas
+        self.mostrar_desde = mostrar_desde
+        self.lambda1 = lambda1
+        self.lambda2 = lambda2
+        self.lambda3 = lambda3
+        self.lambda4 = lambda4
+        self.lambda5 = lambda5
+        self.lambda6 = lambda6
+        self.lambda7 = lambda7
+        self.lambda8 = lambda8
+        self.lambda9 = lambda9
+        self.lambda10 = lambda10
+
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-
+        
         self.boton_simular = QPushButton('Iniciar Simulación')
         self.boton_simular.clicked.connect(self.iniciar_simulacion)
         self.layout.addWidget(self.boton_simular)
@@ -505,7 +613,7 @@ class VentanaSimulacion(QWidget):
         self.layout.addWidget(self.scroll_area)
 
     def iniciar_simulacion(self):
-        simulacion = SimulacionCentroSalud()
+        simulacion = SimulacionCentroSalud(self.lineas, self.mostrar_desde, self.lambda1, self.lambda2, self.lambda3, self.lambda4, self.lambda5, self.lambda6, self.lambda7, self.lambda8, self.lambda9, self.lambda10)
         simulacion.inicializar()
         simulacion.simular()
 
@@ -594,6 +702,6 @@ class VentanaSimulacion(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    ventana = VentanaSimulacion()
+    ventana = VentanaInicial()
     ventana.show()
     sys.exit(app.exec_())
