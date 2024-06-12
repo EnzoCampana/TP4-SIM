@@ -43,14 +43,12 @@ class Paciente:
 
 
 def generar_tiempo_exponencial(lambdaValor):
-    media = 1 / lambdaValor
+    media = 1 / (lambdaValor/60)
     return -media * math.log(1 - random.random())
-
 
 def generar_tiempo_entre_llegadas(lambdaValor):
     tiempo_entre_llegadas = generar_tiempo_exponencial(lambdaValor)
     return tiempo_entre_llegadas
-
 
 def generar_tiempo_atencion(lambdaValor):
     tiempo_atencion = generar_tiempo_exponencial(lambdaValor)
@@ -354,7 +352,7 @@ class SimulacionCentroSalud:
             area_atencion.cola_area.append(nuevo_paciente)
 
 
-        if self.mostrar_desde <= self.nro_evento_simulado <= self.mostrar_desde + 300 or self.nro_evento_simulado == self.lineas:
+        if self.mostrar_desde <= self.nro_evento_simulado <= self.mostrar_desde + 299 or self.nro_evento_simulado == self.lineas:
             self.escribir_fila_tabla_resultados(area_atencion.nombre, "llegada", tiempo_entre_llegadas, proxima_llegada,
                                                 tiempo_atencion if atendido else None, fin_atencion if atendido else None,
                                                 self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
@@ -381,7 +379,6 @@ class SimulacionCentroSalud:
         medico = paciente_atendido.medico_asignado
         if medico is not None:
             medico.estado = "libre"
-            ####################################################################
             llave = self.buscar_key(area_atencion.nombre, "Cola de")
             medico_key = "Medico " + str(1 + medico.id)
             self.diccionario[llave][medico_key] = "libre"
@@ -425,14 +422,14 @@ class SimulacionCentroSalud:
             self.diccionario[llave][medico_key] = "atendiendo"
 
             ##
-            if self.mostrar_desde <= self.nro_evento_simulado <= self.mostrar_desde + 300 or self.nro_evento_simulado == self.lineas:
+            if self.mostrar_desde <= self.nro_evento_simulado <= self.mostrar_desde + 299 or self.nro_evento_simulado == self.lineas:
                 self.escribir_fila_tabla_resultados(area_atencion.nombre, "fin_atencion", None, None, tiempo_atencion,
                                                     fin_atencion,
                                                     self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
                                                     self.pacientes_atendidos_pediatr,
                                                     self.pacientes_atendidos_laborator, self.pacientes_atendidos_farm)
         else:
-            if self.mostrar_desde <= self.nro_evento_simulado <= self.mostrar_desde + 300 or self.nro_evento_simulado == self.lineas:
+            if self.mostrar_desde <= self.nro_evento_simulado <= self.mostrar_desde + 299 or self.nro_evento_simulado == self.lineas:
                 self.escribir_fila_tabla_resultados(area_atencion.nombre, "fin_atencion", None, None, None, None,
                                                     self.pacientes_atendido_consulta, self.pacientes_atendidos_odontolo,
                                                     self.pacientes_atendidos_pediatr,
@@ -511,42 +508,52 @@ class VentanaInicial(QWidget):
         
         self.layout.addWidget(QLabel('Llegada consulta general por hora:'))
         self.lambdaentry1 = QLineEdit()
+        self.lambdaentry1.setText('30')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry1)
         
-        self.layout.addWidget(QLabel('Llegada odontologia por hora:'))
+        self.layout.addWidget(QLabel('Llegada odontología por hora:'))
         self.lambdaentry2 = QLineEdit()
+        self.lambdaentry2.setText('12')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry2)
 
-        self.layout.addWidget(QLabel('Llegada pediatria por hora:'))
+        self.layout.addWidget(QLabel('Llegada pediatría por hora:'))
         self.lambdaentry3 = QLineEdit()
+        self.lambdaentry3.setText('10')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry3)
 
         self.layout.addWidget(QLabel('Llegada laboratorio por hora:'))
         self.lambdaentry4 = QLineEdit()
+        self.lambdaentry4.setText('20')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry4)
 
         self.layout.addWidget(QLabel('Llegada farmacia por hora:'))
         self.lambdaentry5 = QLineEdit()
+        self.lambdaentry5.setText('25')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry5)
 
         self.layout.addWidget(QLabel('Fin atención consulta general por hora:'))
         self.lambdaentry6 = QLineEdit()
+        self.lambdaentry6.setText('6')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry6)
         
         self.layout.addWidget(QLabel('Fin atención odontología por hora:'))
         self.lambdaentry7 = QLineEdit()
+        self.lambdaentry7.setText('4')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry7)
 
         self.layout.addWidget(QLabel('Fin atención pediatría por hora:'))
         self.lambdaentry8 = QLineEdit()
+        self.lambdaentry8.setText('5')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry8)
 
         self.layout.addWidget(QLabel('Fin atención laboratorio por hora:'))
         self.lambdaentry9 = QLineEdit()
+        self.lambdaentry9.setText('8')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry9)
 
         self.layout.addWidget(QLabel('Fin atención farmacia por hora:'))
         self.lambdaentry10 = QLineEdit()
+        self.lambdaentry10.setText('15')  # Valor predeterminado
         self.layout.addWidget(self.lambdaentry10)
         
         self.boton_iniciar = QPushButton('Iniciar Simulación')
@@ -578,7 +585,6 @@ class VentanaInicial(QWidget):
             self.ventana_simulacion.show()
         except ValueError:
             QMessageBox.critical(self, "Error", "Por favor, ingrese valores válidos.")
-
 
 class VentanaSimulacion(QWidget):
     def __init__(self,lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5,
