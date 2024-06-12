@@ -60,6 +60,13 @@ def generar_tiempo_atencion(lambdaValor):
 class SimulacionCentroSalud:
     def __init__(self, lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5, lambda6, lambda7, lambda8, lambda9, lambda10):
         self.reloj = 0
+
+        """
+        self.reloj = 0
+        self.tiempo_total_simulacion = 60
+        self.cantidad_eventos_a_simular = 300
+        
+        """
         self.tiempo_total_simulacion = lineas
         if (lineas - mostrar_desde) < 300:
             self.cantidad_eventos_a_simular = mostrar_desde + (lineas - mostrar_desde)
@@ -74,6 +81,10 @@ class SimulacionCentroSalud:
         self.especialistas_por_area = [5, 3, 2, 4, 2]
         self.lambda_llegadas_area = [lambda1, lambda2, lambda3, lambda4, lambda5]
         self.lambda_atencion_area = [lambda6, lambda7, lambda8, lambda9, lambda10]
+        """
+        self.lambda_llegadas_area = [30, 12, 10, 20, 25]
+        self.lambda_atencion_area = [6, 4, 5, 8, 15]
+        """
 
         for i in range(len(self.nombre_areas)):
             self.areas.append(Area(self.nombre_areas[i],
