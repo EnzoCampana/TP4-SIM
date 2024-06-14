@@ -216,6 +216,7 @@ class SimulacionCentroSalud:
         lista = self.diccionario_vector()
         self.tabla_resultados.append(lista)
         self.nro_evento_simulado += 1
+        
 
     ###################
     def escribir_fila_tabla_resultados(self, area, evento, tiempo_entre_llegadas, proxima_llegada, tiempo_atencion,
@@ -260,9 +261,11 @@ class SimulacionCentroSalud:
         self.diccionario["Cola de pediatria"]["Contador"] = pacientes_atendidos_pediatr
         self.diccionario["Cola de laboratorio"]["Contador"] = pacientes_atendidos_laborator
         self.diccionario["Cola de farmacia"]["Contador"] = pacientes_atendidos_farm
-        if mostrar_desde <= nro_evento_simulado <= mostrar_desde + 299 or nro_evento_simulado == lineas:
+
+        if mostrar_desde <= nro_evento_simulado < mostrar_desde + 300 or nro_evento_simulado == lineas:
             lista = self.diccionario_vector()
             self.tabla_resultados.append(lista)
+            
 
     def simular(self):
         # aca la condicion de simulacion va a ser un parametro N que va a venir de la interfaz y la cantidad de eventos len(tabla_resultaodos)
@@ -274,6 +277,7 @@ class SimulacionCentroSalud:
             if len(self.eventos) > 0:
                 evento_actual = self.eventos.pop(0)
                 self.nro_evento_simulado += 1
+                print(self.nro_evento_simulado)
                 self.reloj = evento_actual[1]
                 tipo_evento = evento_actual[0]
 
@@ -379,6 +383,7 @@ class SimulacionCentroSalud:
         if area_atencion is None:
             return
 
+        self.pacientes_atendidos += 1
         paciente_atendido = next((p for p in area_atencion.pacientes_atendidos if p.estado == "siendo_atendido"), None)
         if paciente_atendido is None:
             return
@@ -454,10 +459,12 @@ class SimulacionCentroSalud:
     def actualizar_tiempo_promedio(self, area_atencion, paciente_atendido, area_nombre):
         paciente_atendido.tiempo_salida = self.reloj
         self.tiempo_permanencia_total += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso)
+    
 
         if area_nombre == "Consulta general":
             self.tiempo_permanencia_totalCons += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso)
             self.tiempoEsperaPromedioConsulta += self.tiempo_permanencia_totalCons / self.pacientes_atendido_consulta
+            
         elif area_nombre == "Odontologia":
             self.tiempo_permanencia_totalOdon += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso)
             self.tiempoEsperaPromedioOdonto += self.tiempo_permanencia_totalOdon / self.pacientes_atendidos_odontolo
@@ -479,30 +486,41 @@ class SimulacionCentroSalud:
 
         if self.pacientes_atendido_consulta > 0:
             tiempo_espera_promedioConsulta = self.tiempo_permanencia_totalCons / self.pacientes_atendido_consulta
+            porcentajeConsulta = (self.tiempo_permanencia_totalCons * 100) / self.reloj
+            
         else:
             tiempo_espera_promedioConsulta = 0
+            porcentajeConsulta = 0
 
         if self.pacientes_atendidos_odontolo > 0:
             tiempo_espera_promedioOdontolo = self.tiempo_permanencia_totalOdon / self.pacientes_atendidos_odontolo
+            porcentajeOdontologia = (self.tiempo_permanencia_totalOdon * 100) / self.reloj
         else:
             tiempo_espera_promedioOdontolo = 0
+            porcentajeOdontologia = 0
 
         if self.pacientes_atendidos_pediatr > 0:
             tiempo_espera_promedioPediatr = self.tiempo_permanencia_totalPed / self.pacientes_atendidos_pediatr
+            porcentajePediatria = (self.tiempo_permanencia_totalPed * 100) / self.reloj
         else:
             tiempo_espera_promedioPediatr = 0
+            porcentajePediatria = 0
 
         if self.pacientes_atendidos_laborator > 0:
             tiempo_espera_promedioLaborat = self.tiempo_permanencia_totalLab / self.pacientes_atendidos_laborator
+            porcentajeLaboratorio = (self.tiempo_permanencia_totalLab * 100) / self.reloj
         else:
             tiempo_espera_promedioLaborat = 0
+            porcentajeLaboratorio = 0
 
         if self.pacientes_atendidos_farm > 0:
             tiempo_espera_promedioFarmaci = self.tiempo_permanencia_totalFarm / self.pacientes_atendidos_farm
+            porcentajeFarmacia = (self.tiempo_permanencia_totalFarm * 100) / self.reloj
         else:
             tiempo_espera_promedioFarmaci = 0
+            porcentajeFarmacia = 0
 
-        return self.pacientes_atendidos, tiempo_espera_promedio, tiempo_espera_promedioConsulta, tiempo_espera_promedioOdontolo, tiempo_espera_promedioPediatr, tiempo_espera_promedioLaborat, tiempo_espera_promedioFarmaci
+        return self.pacientes_atendidos, tiempo_espera_promedio, tiempo_espera_promedioConsulta, tiempo_espera_promedioOdontolo, tiempo_espera_promedioPediatr, tiempo_espera_promedioLaborat, tiempo_espera_promedioFarmaci, porcentajeConsulta, porcentajeOdontologia, porcentajePediatria, porcentajeLaboratorio, porcentajeFarmacia
 
 
 class VentanaInicial(QWidget):
@@ -710,15 +728,15 @@ class VentanaSimulacion(QWidget):
                 tabla.setItem(i, j, item)
 
     def mostrar_tiempo_espera(self, resultados_finales):
-        pacientes_atendidos, tiempo_espera_promedio, tiempo_espera_promedioConsulta, tiempo_espera_promedioOdontolo, tiempo_espera_promedioPediatr, tiempo_espera_promedioLaborat, tiempo_espera_promedioFarmaci = resultados_finales
+        pacientes_atendidos, tiempo_espera_promedio, tiempo_espera_promedioConsulta, tiempo_espera_promedioOdontolo, tiempo_espera_promedioPediatr, tiempo_espera_promedioLaborat, tiempo_espera_promedioFarmaci, porcentajeConsulta, porcentajeOdontologia, porcentajePediatria, porcentajeLaboratorio, porcentajeFarmacia = resultados_finales
 
         texto_resultados_general = f"Pacientes atendidos: {pacientes_atendidos}\nTiempo de espera promedio general: {tiempo_espera_promedio:.2f} minutos"
         texto_resultados_especialidad = f"\nTiempo de espera promedio por especialidad:\n"
-        texto_resultados_especialidad += f"Consulta: {tiempo_espera_promedioConsulta:.2f} minutos\n"
-        texto_resultados_especialidad += f"Odontología: {tiempo_espera_promedioOdontolo:.2f} minutos\n"
-        texto_resultados_especialidad += f"Pediatria: {tiempo_espera_promedioPediatr:.2f} minutos\n"
-        texto_resultados_especialidad += f"Laboratorio: {tiempo_espera_promedioLaborat:.2f} minutos\n"
-        texto_resultados_especialidad += f"Farmacia: {tiempo_espera_promedioFarmaci:.2f} minutos"
+        texto_resultados_especialidad += f"Consulta: {tiempo_espera_promedioConsulta:.2f} minutos. Porcentaje de ocupacion: {round(porcentajeConsulta,2)}%\n"
+        texto_resultados_especialidad += f"Odontología: {tiempo_espera_promedioOdontolo:.2f} minutos. Porcentaje de ocupacion : {round(porcentajeOdontologia,2)}%\n"
+        texto_resultados_especialidad += f"Pediatria: {tiempo_espera_promedioPediatr:.2f} minutos. Porcentaje de ocupacion: {round(porcentajePediatria,2)}%\n"
+        texto_resultados_especialidad += f"Laboratorio: {tiempo_espera_promedioLaborat:.2f} minutos. Porcentaje de ocupacion: {round(porcentajeLaboratorio,2)}%\n"
+        texto_resultados_especialidad += f"Farmacia: {tiempo_espera_promedioFarmaci:.2f} minutos. Porcentaje de ocupacion: {round(porcentajeFarmacia,2)}%\n"
 
         etiqueta_resultados_general = QLabel(texto_resultados_general)
         etiqueta_resultados_especialidad = QLabel(texto_resultados_especialidad)
