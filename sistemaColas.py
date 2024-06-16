@@ -262,14 +262,15 @@ class SimulacionCentroSalud:
         self.diccionario["Cola de laboratorio"]["Contador"] = pacientes_atendidos_laborator
         self.diccionario["Cola de farmacia"]["Contador"] = pacientes_atendidos_farm
 
-        if mostrar_desde <= nro_evento_simulado < mostrar_desde + 300 or nro_evento_simulado == lineas:
+        if (mostrar_desde <= nro_evento_simulado < mostrar_desde + 300) or nro_evento_simulado == lineas:
             lista = self.diccionario_vector()
             self.tabla_resultados.append(lista)
             
 
     def simular(self):
         # aca la condicion de simulacion va a ser un parametro N que va a venir de la interfaz y la cantidad de eventos len(tabla_resultaodos)
-        # for i in range(lineas_a_simular)
+        # for i in range(lineas_a_simular)tabla_resultados
+
         for _ in range(self.lineas):
             # Ordenar eventos por tiempo
             self.eventos.sort(key=lambda evento: evento[1])
@@ -277,7 +278,6 @@ class SimulacionCentroSalud:
             if len(self.eventos) > 0:
                 evento_actual = self.eventos.pop(0)
                 self.nro_evento_simulado += 1
-                print(self.nro_evento_simulado)
                 self.reloj = evento_actual[1]
                 tipo_evento = evento_actual[0]
 
@@ -442,6 +442,7 @@ class SimulacionCentroSalud:
             llave = self.buscar_key(area_atencion.nombre, "Cola de")
             medico.estado = "atendiendo"
             medico_key = "Medico " + str(1 + medico.id)
+            area_atencion.pacientes_atendidos.append(siguiente_paciente)
             self.diccionario[llave][medico_key] = "atendiendo"
 
             ##
@@ -535,10 +536,12 @@ class VentanaInicial(QWidget):
 
         self.layout.addWidget(QLabel('Cantidad de líneas a simular:'))
         self.lineas_entry = QLineEdit()
+        self.lineas_entry.setText('1000')
         self.layout.addWidget(self.lineas_entry)
 
         self.layout.addWidget(QLabel('Mostrar desde la línea:'))
         self.mostrar_desde_entry = QLineEdit()
+        self.mostrar_desde_entry.setText('12')  # Valor predeterminado
         self.layout.addWidget(self.mostrar_desde_entry)
 
         self.layout.addWidget(QLabel('Llegada consulta general por hora:'))
@@ -628,10 +631,8 @@ class VentanaSimulacion(QWidget):
     def __init__(self, lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5,
                  lambda6, lambda7, lambda8, lambda9, lambda10):
         super().__init__()
-
         self.setWindowTitle('Simulación Centro de Salud')
         self.setGeometry(100, 100, 1200, 600)
-
         self.lineas = lineas
         self.mostrar_desde = mostrar_desde
         self.lambda1 = lambda1
