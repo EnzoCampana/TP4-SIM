@@ -1,4 +1,4 @@
-import simulacionCentroSalud
+from simulacionCentroSalud import SimulacionCentroSalud
 from PyQt5.QtWidgets import QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, \
     QPushButton, QScrollArea
 from PyQt5.QtGui import QColor
@@ -38,7 +38,7 @@ class VentanaSimulacion(QWidget):
         self.layout.addWidget(self.scroll_area)
 
     def iniciar_simulacion(self):
-        simulacion = simulacionCentroSalud.SimulacionCentroSalud(self.lineas, self.mostrar_desde, self.lambda1, self.lambda2, self.lambda3,
+        simulacion = SimulacionCentroSalud(self.lineas, self.mostrar_desde, self.lambda1, self.lambda2, self.lambda3,
                                            self.lambda4, self.lambda5, self.lambda6, self.lambda7, self.lambda8,
                                            self.lambda9, self.lambda10)
         simulacion.inicializar()
@@ -91,18 +91,11 @@ class VentanaSimulacion(QWidget):
 
         # Llenar la tabla con los datos de tablaResultados
         for i, resultado in enumerate(tablaResultados):
-            # Obtener el valor de la columna "Reloj" de la siguiente fila
-            reloj_valor_siguiente_fila = tablaResultados[i + 1][1] if i + 1 < len(tablaResultados) else None
             for j, valor in enumerate(resultado):
                 if valor is not None:
                     item = QTableWidgetItem(f"{valor:.2f}" if isinstance(valor, (int, float)) else str(valor))
                 else:
                     item = QTableWidgetItem("")
-
-                # Resaltar la celda si su valor coincide con el valor de la columna "Reloj" de la siguiente fila
-                if valor == reloj_valor_siguiente_fila:
-                    item.setBackground(QColor(255, 255, 0))  # Amarillo
-
                 tabla.setItem(i, j, item)
 
     def mostrar_tiempo_espera(self, resultados_finales):

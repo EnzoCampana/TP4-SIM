@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication, QLabel, QTableWidget, QTableWidgetItem
 from PyQt5.QtWidgets import QApplication
 import sys
 
-import ventanaSimulacion
+from ventanaSimulacion  import VentanaSimulacion
 
 
 class VentanaInicial(QWidget):
@@ -102,7 +102,7 @@ class VentanaInicial(QWidget):
                 return
 
             self.hide()
-            self.ventana_simulacion = ventanaSimulacion.VentanaSimulacion(lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4,
+            self.ventana_simulacion = VentanaSimulacion(lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4,
                                                         lambda5,
                                                         lambda6, lambda7, lambda8, lambda9, lambda10)
             self.ventana_simulacion.show()

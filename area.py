@@ -1,4 +1,4 @@
-import medico
+from medico import Medico
 
 
 class Area:
@@ -11,7 +11,7 @@ class Area:
         
         self.cola_area = []
 
-        self.medicos = [medico.Medico(i) for i in range(cantidad_especialistas)]
+        self.medicos = [Medico(i) for i in range(cantidad_especialistas)]
         self.primer_inicio_atencion = None
         self.pacientesAtendidos = []
 

@@ -1,4 +1,5 @@
-import area, paciente
+from area import Area
+from paciente import Paciente
 import random
 import math
 
@@ -37,7 +38,7 @@ class SimulacionCentroSalud:
         self.lambda_atencion_area = [lambda6, lambda7, lambda8, lambda9, lambda10]
 
         for i in range(len(self.nombre_areas)):
-            self.areas.append(area.Area(self.nombre_areas[i],
+            self.areas.append(Area(self.nombre_areas[i],
                                    self.especialistas_por_area[i],
                                    self.lambda_llegadas_area[i],
                                    self.lambda_atencion_area[i]))
@@ -263,7 +264,7 @@ class SimulacionCentroSalud:
         if area_atencion is None:
             raise ValueError(f"El área {nombre_area} no existe")
 
-        nuevo_paciente = paciente(self.reloj)
+        nuevo_paciente = Paciente(self.reloj)
         tiempo_entre_llegadas = generar_tiempo_entre_llegadas(area_atencion.media_llegada)
         proxima_llegada = self.reloj + tiempo_entre_llegadas
         llave = self.buscar_key(area_atencion.nombre, "llegada")
@@ -488,7 +489,7 @@ class SimulacionCentroSalud:
         if self.pacientesAtendidosPediatria > 0:
             tiempoEsperaPromedioPediatria = self.tiempoEsperaPromedioAcPediatria / self.pacientesAtendidosPediatria
             porcentajePediatria = (self.tiempoOcupadoPediatria * 100) / self.reloj
-            print(self.reloj)
+            #print(self.reloj)
         else:
             tiempoEsperaPromedioPediatria = 0
             porcentajePediatria = 0
@@ -496,8 +497,8 @@ class SimulacionCentroSalud:
         if self.pacientesAtendidosLaboratorio > 0:
             tiempoEsperaPromedioLaboratorio = self.tiempoEsperaPromedioAcLaboratorio / self.pacientesAtendidosLaboratorio
             porcentajeLaboratorio = (self.tiempoOcupadoLaboratorio * 100) / self.reloj
-            print(self.tiempoOcupadoLaboratorio)
-            print(self.reloj)
+            #print(self.tiempoOcupadoLaboratorio)
+            #print(self.reloj)
         else:
             tiempoEsperaPromedioLaboratorio = 0
             porcentajeLaboratorio = 0
