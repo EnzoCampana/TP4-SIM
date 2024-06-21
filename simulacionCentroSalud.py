@@ -7,11 +7,9 @@ def generar_tiempo_exponencial(lambdaValor):
     media = 1 / (lambdaValor / 60)
     return -media * math.log(1 - random.random())
 
-
 def generar_tiempo_entre_llegadas(lambdaValor):
     tiempo_entre_llegadas = generar_tiempo_exponencial(lambdaValor)
     return tiempo_entre_llegadas
-
 
 def generar_tiempo_atencion(lambdaValor):
     tiempo_atencion = generar_tiempo_exponencial(lambdaValor)
@@ -42,8 +40,6 @@ class SimulacionCentroSalud:
                                    self.especialistas_por_area[i],
                                    self.lambda_llegadas_area[i],
                                    self.lambda_atencion_area[i]))
-
-        # Estos datos son para calcular los estadisticos q pide
 
         # Tiempo de espera promedio y porcentaje de ocupacion. Necesitamos acumular/sumar el tiempo de espera promedio.
         # Necesito para cada paciente que inicia atencion, tiempo inicio atencion - tiempo ingreso / cant pacientes area
@@ -83,7 +79,6 @@ class SimulacionCentroSalud:
         self.tiempoOcupadoLaboratorio = 0
         self.tiempoOcupadoFarmacia = 0
         
-        # ---
         self.tiempoPermanenciaTotal = 0
         self.tiempoPermanenciaTotalConsulta = 0
         self.tiempoPermanenciaTotalOdontologia = 0
@@ -92,6 +87,7 @@ class SimulacionCentroSalud:
         self.tiempoPermanenciaTotalFarmacia = 0
 
         self.tablaResultados = []  # evento, reloj,
+    
         self.diccionario = {
             "Evento": "Inicializacion",
             "Reloj": "0",
@@ -183,37 +179,40 @@ class SimulacionCentroSalud:
                 "Contador": "0",
                 "Tiempo de permanencia": "0"
             },
-            "Toma Servicio": "No",
+            "Toma Servicio" : "No",
             "Fin atencion nutricion": {
+                "Tiempo atencion": "0",
                 "Fin atencion": "0"
             },
-            "Cola de nutricion": {
+             "Cola de nutricion": {
                 "Medico 1": "Libre",
                 "Cola": "0",
             }
         }
 
+    def buscar_area(self, nombre_area):
+        return next((area for area in self.areas if area.nombre == nombre_area), None)
+
     # Metodo que inicializa la simulacion. Calcula los tiempos de llegada de cada area. Actualiza el diccionario. 
     def inicializar(self):
-        primeras_llegadas = [] 
+        def actualizar_diccionario_llegadas(area, tiempo_llegada):
+            key_llegada = f"llegada paciente {area.nombre}"
+            if key_llegada not in self.diccionario:
+                self.diccionario[key_llegada] = {}
+            self.diccionario[key_llegada]["Tiempo entre llegadas"] = tiempo_llegada
+            self.diccionario[key_llegada]["Proxima llegada"] = tiempo_llegada
+
+        primeras_llegadas = []
         for area in self.areas:
             if area.nombre != "nutricion":
                 tiempo_primera_llegada = generar_tiempo_entre_llegadas(area.media_llegada)
                 self.eventos.append((f"llegada_paciente_{area.nombre}", tiempo_primera_llegada))
                 primeras_llegadas.append(tiempo_primera_llegada)
+                actualizar_diccionario_llegadas(area, tiempo_primera_llegada)
 
         self.diccionario["Evento"] = "Inicializacion"
         self.diccionario["Reloj"] = self.reloj
-        self.diccionario["llegada paciente consulta"]["Tiempo entre llegadas"] = primeras_llegadas[0]
-        self.diccionario["llegada paciente odontologia"]["Tiempo entre llegadas"] = primeras_llegadas[1]
-        self.diccionario["llegada paciente pediatria"]["Tiempo entre llegadas"] = primeras_llegadas[2]
-        self.diccionario["llegada paciente laboratorio"]["Tiempo entre llegadas"] = primeras_llegadas[3]
-        self.diccionario["llegada paciente farmacia"]["Tiempo entre llegadas"] = primeras_llegadas[4]
-        self.diccionario["llegada paciente consulta"]["Proxima llegada"] = primeras_llegadas[0]
-        self.diccionario["llegada paciente odontologia"]["Proxima llegada"] = primeras_llegadas[1]
-        self.diccionario["llegada paciente pediatria"]["Proxima llegada"] = primeras_llegadas[2]
-        self.diccionario["llegada paciente laboratorio"]["Proxima llegada"] = primeras_llegadas[3]
-        self.diccionario["llegada paciente farmacia"]["Proxima llegada"] = primeras_llegadas[4]
+
         lista = self.diccionario_vector()
         self.tablaResultados.append(lista)
         self.nro_evento_simulado += 1
@@ -231,64 +230,27 @@ class SimulacionCentroSalud:
                 self.reloj = evento_actual[1] # Agarra el tiempo para ponerlo como reloj
                 tipo_evento = evento_actual[0] # Agarra el tipo de evento
 
-                if tipo_evento == "llegada_paciente_consulta":
-                    self.procesarLlegadaPaciente("consulta")
-
-                elif tipo_evento == "fin_atencion_paciente_consulta":
-                    self.procesarFinAtencionPaciente("consulta")
-
-                elif tipo_evento == "llegada_paciente_odontologia":
-                    self.procesarLlegadaPaciente("odontologia")
-
-                elif tipo_evento == "fin_atencion_paciente_odontologia":
-                    self.procesarFinAtencionPaciente("odontologia")
-
-                elif tipo_evento == "llegada_paciente_pediatria":
-                    self.procesarLlegadaPaciente("pediatria")
-
-                elif tipo_evento == "fin_atencion_paciente_pediatria":
-                    self.procesarFinAtencionPaciente("pediatria")
-
-                elif tipo_evento == "llegada_paciente_laboratorio":
-                    self.procesarLlegadaPaciente("laboratorio")
-
-                elif tipo_evento == "fin_atencion_paciente_laboratorio":
-                    self.procesarFinAtencionPaciente("laboratorio")
-
-                elif tipo_evento == "llegada_paciente_farmacia":
-                    self.procesarLlegadaPaciente("farmacia")
-
-                elif tipo_evento == "fin_atencion_paciente_farmacia":
-                    self.procesarLlegadaPaciente("farmacia")
-
-                elif tipo_evento == "llegada_paciente_nutricion":
-                    self.procesarLlegadaPaciente("nutricion")
-
-                elif tipo_evento == "fin_atencion_paciente_nutricion":
-                    print("1- 265- me llego un evention de fin nutricion")
-                    self.procesarFinAtencionPaciente("nutricion")
+                if tipo_evento.startswith("llegada_paciente_"):
+                    area_nombre = tipo_evento.split("_")[-1]
+                    self.procesarLlegadaPaciente(area_nombre)
+                elif tipo_evento.startswith("fin_atencion_paciente_"):
+                    area_nombre = tipo_evento.split("_")[-1]
+                    self.procesarFinAtencionPaciente(area_nombre)
 
     def procesarLlegadaPaciente(self, nombre_area):
 
-        area_atencion = None
-        for area in self.areas:
-            if nombre_area == area.nombre:
-                area_atencion = area
-                break
-
-        # Verificar si el área se encontró
+        area_atencion = self.buscar_area(nombre_area)
         if area_atencion is None:
             raise ValueError(f"El área {nombre_area} no existe")
         
         nuevo_paciente = Paciente(self.reloj)
         # nutricion se maneja con el random, no con tiempo de llegadas
-        
-        tiempo_entre_llegadas = generar_tiempo_entre_llegadas(area_atencion.media_llegada)
-        proxima_llegada = self.reloj + tiempo_entre_llegadas
-        llave = self.buscar_key(area_atencion.nombre, "llegada")
-        self.diccionario[llave]["Tiempo entre llegadas"] = tiempo_entre_llegadas
-        self.diccionario[llave]["Proxima llegada"] = proxima_llegada
         if area_atencion.nombre != "nutricion":
+            tiempo_entre_llegadas = generar_tiempo_entre_llegadas(area_atencion.media_llegada)
+            proxima_llegada = self.reloj + tiempo_entre_llegadas
+            llave = self.buscar_key(area_atencion.nombre, "llegada")
+            self.diccionario[llave]["Tiempo entre llegadas"] = tiempo_entre_llegadas
+            self.diccionario[llave]["Proxima llegada"] = proxima_llegada
             self.eventos.append((f"llegada_paciente_{area_atencion.nombre}", proxima_llegada))
 
         atendido = False
@@ -345,17 +307,15 @@ class SimulacionCentroSalud:
                                             self.mostrar_desde, self.nro_evento_simulado, self.lineas, asiste_servicio)
 
     def procesarFinAtencionPaciente(self, nombre_area):
-            area_atencion = next((a for a in self.areas if nombre_area == a.nombre), None)
-
+            area_atencion = self.buscar_area(nombre_area)
             if area_atencion is None:
-                return
+                raise ValueError(f"El área {nombre_area} no existe")
 
             paciente_atendido = next((p for p in area_atencion.pacientesAtendidos if p.estado == "siendo_atendido"), None)
             if paciente_atendido is None:
                 return
             
             self.pacientes_atendidos += 1
-            
 
             medico = paciente_atendido.medico_asignado
 
@@ -408,23 +368,37 @@ class SimulacionCentroSalud:
             asiste_servicio = False
             if area_atencion.nombre != "nutricion":
                 rnd = random.random()
-                if rnd <= 0.2:
+                if rnd <= 0.01:
                     asiste_servicio = True
-                    #tiempo_atencion = generar_tiempo_atencion(2)
-                    self.eventos.append(("llegada_paciente_nutricion", self.reloj))
-                    #self.eventos.append(("fin_atencion_paciente_nutricion", tiempo_atencion))
+                    tiempo_atencion = generar_tiempo_atencion(2)
+                   
+                    
+                    fin_atencion = self.reloj + tiempo_atencion
+
+                    self.eventos.append(("fin_atencion_paciente_nutricion", fin_atencion))
+                    self.diccionario["Fin atencion nutricion"]["Tiempo atencion"] = tiempo_atencion
+                    self.diccionario["Fin atencion nutricion"]["Fin atencion"] = fin_atencion
+                    self.diccionario["Cola de nutricion"]["Medico 1"] = "Atendiendo"
+                    """
+                     cola = int(self.diccionario[llave]["Cola"])
+                    cola += 1
+                    self.diccionario[llave]["Cola"] = str(cola)
+                    if self.diccionario["Cola de nutricion"]["Cola"]
+                    self.diccionario["Cola de nutricion"]["Cola"] = tiempo_atencion
+                    """
 
             if area_atencion.cola_area:
                 siguiente_paciente = area_atencion.cola_area.pop(0)
                 llave = self.buscar_key(area_atencion.nombre, "Cola de")
-                cola = int(self.diccionario[llave]["Cola"])
-                cola -= 1
+                cola = int(self.diccionario[llave]["Cola"]) - 1
                 self.diccionario[llave]["Cola"] = str(cola)
+
                 siguiente_paciente.estado = "siendo_atendido"
                 siguiente_paciente.tiempo_inicio_atencion = self.reloj
                 siguiente_paciente.medico_asignado = medico
                 tiempo_atencion = generar_tiempo_atencion(area_atencion.media_atencion)
                 fin_atencion = self.reloj + tiempo_atencion
+
                 llave = self.buscar_key(area_atencion.nombre, "Fin atencion")
                 self.diccionario[llave]["Tiempo atencion"] = tiempo_atencion
                 self.diccionario[llave]["Fin atencion"] = fin_atencion
@@ -551,6 +525,7 @@ class SimulacionCentroSalud:
 
     # -------------------------- Metodos extra ------------------------------------------
 
+    
     # Metodo para transformar el diccionario en un vector 
 
     def diccionario_vector(self, d=None):
@@ -586,7 +561,7 @@ class SimulacionCentroSalud:
                 "pediatria": ("llegada_paciente_pediatria", "Fin atencion pediatria"),
                 "laboratorio": ("llegada_paciente_laboratorio", "Fin atencion laboratorio"),
                 "farmacia": ("llegada_paciente_farmacia", "Fin atencion farmacia"),
-                "nutricion": ("llegada_paciente_nutricion", "Fin atencion nutricion")
+                "nutricion": ("llegada_paciente_nutricion", "Fin atencion nutricion"),
             }
 
             if area not in evento_map:
@@ -617,11 +592,12 @@ class SimulacionCentroSalud:
             self.diccionario["Cola de laboratorio"]["Contador"] = pacientesAtendidosLaboratorio
             self.diccionario["Cola de farmacia"]["Contador"] = pacientesAtendidosFarmacia
 
-            if asiste_servicio == True:
+            # datos para el servicio extra
+            if asiste_servicio:
                 self.diccionario["Toma Servicio"] = "Si"
             else:
                 self.diccionario["Toma Servicio"] = "No"
-
+         
             if (mostrar_desde <= nro_evento_simulado <= mostrar_desde + 299) or nro_evento_simulado == lineas:
                 lista = self.diccionario_vector()
                 self.tablaResultados.append(lista)
