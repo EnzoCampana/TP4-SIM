@@ -83,7 +83,7 @@ class VentanaSimulacion(QWidget):
             'Cola de Laboratorio.Medico 2', 'Cola de Laboratorio.Medico 3', 'Cola de Laboratorio.Medico 4',
             'Cola de Laboratorio.Cola', 'Cola de Laboratorio.Contador', 'Cola de Laboratorio.Tiempo de permanencia',
             'Cola de Farmacia.Medico 1', 'Cola de Farmacia.Medico 2', 'Cola de Farmacia.Cola',
-            'Cola de Farmacia.Contador', 'Cola de Farmacia.Tiempo de permanencia']
+            'Cola de Farmacia.Contador', 'Cola de Farmacia.Tiempo de permanencia', 'Toma SS Nutri', 'fin atencion nutricion.Fin atencion','Estado Nutri', 'Cola Nutri']
 
         # Fijar la cantidad de columnas y sus encabezados
         tabla.setColumnCount(len(encabezado_tabla))
