@@ -116,3 +116,5 @@ if __name__ == "__main__":
     ventana = VentanaInicial()
     ventana.show()
     sys.exit(app.exec_())
+
+
