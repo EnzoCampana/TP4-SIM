@@ -6,14 +6,14 @@ from PyQt5.QtWidgets import QApplication, QLabel, QTableWidget, QTableWidgetItem
 from PyQt5.QtGui import QColor
 import sys
 
+
 class Area:
     def __init__(self, nombre, cantidad_especialistas, media_llegada, media_atencion):
-
         self.nombre = nombre
         self.cantidad_especialistas = cantidad_especialistas
         self.media_llegada = media_llegada
         self.media_atencion = media_atencion
-        
+
         self.cola_area = []
 
         self.medicos = [Medico(i) for i in range(cantidad_especialistas)]
@@ -35,14 +35,13 @@ class Medico:
 
 class Paciente:
     def __init__(self, tiempo_ingreso):
-        
         self.tiempo_ingreso = tiempo_ingreso
 
         self.estado = "esperando_atencion"  # "esperando_atencion" o "siendo_atendido"
         self.tiempo_ingreso = tiempo_ingreso
         self.tiempo_inicio_atencion = None
         self.tiempo_salida = None
-
+        self.tiempo_aux = None
         # es necesario para liberar a ese medico cuando termine la atencion
         self.medico_asignado = None
 
@@ -60,6 +59,7 @@ def generar_tiempo_entre_llegadas(lambdaValor):
 def generar_tiempo_atencion(lambdaValor):
     tiempo_atencion = generar_tiempo_exponencial(lambdaValor)
     return tiempo_atencion
+
 
 #-----------------------------------------------------------------------------------------------
 
@@ -128,7 +128,7 @@ class SimulacionCentroSalud:
         self.tiempoOcupadoPediatria = 0
         self.tiempoOcupadoLaboratorio = 0
         self.tiempoOcupadoFarmacia = 0
-        
+
         # ---
         self.tiempoPermanenciaTotal = 0
         self.tiempoPermanenciaTotalConsulta = 0
@@ -163,23 +163,25 @@ class SimulacionCentroSalud:
             },
             "Fin atencion consulta": {
                 "Tiempo atencion": "0",
-                "Fin atencion": "0"
+                "Fin atencion": "0",
+                "1": "0", "2": "0", "3": "0", "4": "0", "5": "0"
             },
             "Fin atencion odontologia": {
                 "Tiempo atencion": "0",
-                "Fin atencion": "0"
+                "Fin atencion": "0",
+                "1": "0", "2": "0", "3": "0"
             },
             "Fin atencion pediatria": {
                 "Tiempo atencion": "0",
-                "Fin atencion": "0"
+                "Fin atencion": "0", "1": "0", "2": "0"
             },
             "Fin atencion laboratorio": {
                 "Tiempo atencion": "0",
-                "Fin atencion": "0"
+                "Fin atencion": "0", "1": "0", "2": "0", "3": "0", "4": "0"
             },
             "Fin atencion farmacia": {
                 "Tiempo atencion": "0",
-                "Fin atencion": "0"
+                "Fin atencion": "0", "1": "0", "2": "0"
             },
             "Tiempo de espera promedio": {
                 "Consulta general": "0",
@@ -233,7 +235,7 @@ class SimulacionCentroSalud:
 
     # Metodo que inicializa la simulacion. Calcula los tiempos de llegada de cada area. Actualiza el diccionario. 
     def inicializar(self):
-        primeras_llegadas = [] 
+        primeras_llegadas = []
         for area in self.areas:
             tiempo_primera_llegada = generar_tiempo_entre_llegadas(area.media_llegada)
             self.eventos.append((f"llegada_paciente_{area.nombre}", tiempo_primera_llegada))
@@ -260,13 +262,14 @@ class SimulacionCentroSalud:
 
         for _ in range(self.lineas):
             # Ordenar eventos por tiempo
-            self.eventos.sort(key=lambda evento: evento[1]) # Ordena los eventos segun el 2 parametro que es el tiempo llegada
+            self.eventos.sort(
+                key=lambda evento: evento[1])  # Ordena los eventos segun el 2 parametro que es el tiempo llegada
 
             if len(self.eventos) > 0:
-                evento_actual = self.eventos.pop(0) # Elimina y devuelve el primer elemento de la lista 
+                evento_actual = self.eventos.pop(0)  # Elimina y devuelve el primer elemento de la lista
                 self.nro_evento_simulado += 1
-                self.reloj = evento_actual[1] # Agarra el tiempo para ponerlo como reloj
-                tipo_evento = evento_actual[0] # Agarra el tipo de evento
+                self.reloj = evento_actual[1]  # Agarra el tiempo para ponerlo como reloj
+                tipo_evento = evento_actual[0]  # Agarra el tipo de evento
 
                 if tipo_evento == "llegada_paciente_consulta":
                     self.procesarLlegadaPaciente("consulta")
@@ -300,6 +303,7 @@ class SimulacionCentroSalud:
 
     def procesarLlegadaPaciente(self, nombre_area):
 
+        global numero
         area_atencion = None
         for area in self.areas:
             if nombre_area == area.nombre:
@@ -324,26 +328,33 @@ class SimulacionCentroSalud:
             if medico.estado == "libre":
                 nuevo_paciente.estado = "siendo_atendido"
                 nuevo_paciente.tiempo_inicio_atencion = self.reloj
-                if area_atencion.nombre == 'consulta': 
-                    self.tiempoEsperaPromedioAcConsulta+= (nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
+                if area_atencion.nombre == 'consulta':
+                    self.tiempoEsperaPromedioAcConsulta += (
+                            nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
                 elif area_atencion.nombre == 'odontologia':
-                    self.tiempoEsperaPromedioAcOdontologia += (nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
+                    self.tiempoEsperaPromedioAcOdontologia += (
+                            nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
                 elif area_atencion.nombre == 'pediatria':
-                    self.tiempoEsperaPromedioAcPediatria += (nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
+                    self.tiempoEsperaPromedioAcPediatria += (
+                            nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
                 elif area_atencion.nombre == 'laboratorio':
-                    self.tiempoEsperaPromedioAcLaboratorio += (nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
+                    self.tiempoEsperaPromedioAcLaboratorio += (
+                            nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
                 elif area_atencion.nombre == 'farmacia':
-                    self.tiempoEsperaPromedioAcFarmacia += (nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
+                    self.tiempoEsperaPromedioAcFarmacia += (
+                            nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
 
                 nuevo_paciente.medico_asignado = medico
 
                 tiempo_atencion = generar_tiempo_atencion(area_atencion.media_atencion)
                 fin_atencion = self.reloj + tiempo_atencion
-
+                nuevo_paciente.tiempo_aux = str(fin_atencion)
                 llave = self.buscar_key(area_atencion.nombre, "Fin")
                 self.diccionario[llave]["Fin atencion"] = fin_atencion
                 self.diccionario[llave]["Tiempo atencion"] = tiempo_atencion
                 self.eventos.append((f"fin_atencion_paciente_{area_atencion.nombre}", fin_atencion))
+                numero = str(1 + medico.id)
+                self.diccionario[llave][numero] = fin_atencion
 
                 medico.estado = "atendiendo"
                 llave = self.buscar_key(area_atencion.nombre, "Cola de")
@@ -356,7 +367,6 @@ class SimulacionCentroSalud:
 
         # Si no lo puede atender nadie, lo manda a la cola 
         if not atendido:
-            
             llave = self.buscar_key(area_atencion.nombre, "Cola de")
             cola = int(self.diccionario[llave]["Cola"])
             cola += 1
@@ -364,148 +374,163 @@ class SimulacionCentroSalud:
             area_atencion.cola_area.append(nuevo_paciente)
 
         self.escribir_fila_tablaResultados(area_atencion.nombre, "llegada", tiempo_entre_llegadas, proxima_llegada,
-                                            tiempo_atencion if atendido else None, fin_atencion if atendido else None,
-                                            self.pacientesAtendidosConsulta, self.pacientesAtendidosOdontologia,
-                                            self.pacientesAtendidosPediatria,
-                                            self.pacientesAtendidosLaboratorio, self.pacientesAtendidosFarmacia,
-                                            self.mostrar_desde, self.nro_evento_simulado, self.lineas)
+                                           tiempo_atencion if atendido else None, fin_atencion if atendido else None,
+                                           self.pacientesAtendidosConsulta, self.pacientesAtendidosOdontologia,
+                                           self.pacientesAtendidosPediatria,
+                                           self.pacientesAtendidosLaboratorio, self.pacientesAtendidosFarmacia,
+                                           self.mostrar_desde, self.nro_evento_simulado, self.lineas, numero)
 
     def procesarFinAtencionPaciente(self, nombre_area):
-            area_atencion = next((a for a in self.areas if nombre_area == a.nombre), None)
-            if area_atencion is None:
-                return
+        area_atencion = next((a for a in self.areas if nombre_area == a.nombre), None)
+        paciente_atendido = None
+        if area_atencion is None:
+            return
+        for p in area_atencion.pacientesAtendidos:
+            if p.estado == "siendo_atendido" and p.tiempo_aux == str(self.reloj):
+                paciente_atendido = p
+                break
 
-            
-            paciente_atendido = next((p for p in area_atencion.pacientesAtendidos if p.estado == "siendo_atendido"), None)
-            if paciente_atendido is None:
-                return
-            
-            self.pacientes_atendidos += 1
-            
+        if paciente_atendido is None:
+            return
+        self.pacientes_atendidos += 1
 
-            medico = paciente_atendido.medico_asignado
+        medico = paciente_atendido.medico_asignado
 
-            if medico is not None:
-                medico.estado = "libre"
-                llave = self.buscar_key(area_atencion.nombre, "Cola de")
-                medico_key = "Medico " + str(1 + medico.id)
-                self.diccionario[llave][medico_key] = "libre"
+        if medico is not None:
+            medico.estado = "libre"
+            llave = self.buscar_key(area_atencion.nombre, "Cola de")
+            medico_key = "Medico " + str(1 + medico.id)
+            self.diccionario[llave][medico_key] = "libre"
+            llave = self.buscar_key(area_atencion.nombre, "Fin")
+            numero = str(1 + medico.id)
+            self.diccionario[llave][numero] = "0"
 
-            area_atencion.quitar_paciente_atendido(paciente_atendido)
+        area_atencion.quitar_paciente_atendido(paciente_atendido)
 
-            self.calcularTiempoOcupado( area_atencion, paciente_atendido)
-            # Agrego 1 al contador del area, actualizo los tiempos promedios de PERMANENCIA. Escribo en el diccionario
-            if nombre_area == "consulta":
+        self.calcularTiempoOcupado(area_atencion, paciente_atendido)
+        # Agrego 1 al contador del area, actualizo los tiempos promedios de PERMANENCIA. Escribo en el diccionario
+        if nombre_area == "consulta":
 
-                self.tiempoEsperaPromedioAcConsulta += (paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
-                self.pacientesAtendidosConsulta += 1
-                self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Consulta general")
-                self.diccionario["Cola de consultas generales"]["Tiempo de permanencia"]=self.tiempoPermanenciaTotalConsulta
-                self.diccionario["Tiempo de espera promedio"]["Consulta general"] = self.tiempoEsperaPromedioAcConsulta
-            elif nombre_area == "odontologia":
+            self.tiempoEsperaPromedioAcConsulta += (
+                    paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
+            self.pacientesAtendidosConsulta += 1
+            self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Consulta general")
+            self.diccionario["Cola de consultas generales"][
+                "Tiempo de permanencia"] = self.tiempoPermanenciaTotalConsulta
+            self.diccionario["Tiempo de espera promedio"]["Consulta general"] = self.tiempoEsperaPromedioAcConsulta
+        elif nombre_area == "odontologia":
 
-                self.tiempoEsperaPromedioAcOdontologia += (paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
-                self.pacientesAtendidosOdontologia += 1
-                self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Odontologia")
-                self.diccionario["Cola de odontologia"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalOdontologia
-                self.diccionario["Tiempo de espera promedio"]["Odontologia"] = self.tiempoEsperaPromedioAcOdontologia
-            elif nombre_area == "pediatria":
-                self.tiempoEsperaPromedioAcPediatria += (paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
-                self.pacientesAtendidosPediatria += 1
-                self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Pediatria")
-                self.diccionario["Cola de pediatria"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalPediatria
-                self.diccionario["Tiempo de espera promedio"]["Pediatria"] = self.tiempoEsperaPromedioAcPediatria
-            elif nombre_area == "laboratorio":
-                self.tiempoEsperaPromedioAcLaboratorio += (paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
-                self.pacientesAtendidosLaboratorio += 1
-                self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Laboratorio")
-                self.diccionario["Cola de laboratorio"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalFarmacia
-                self.diccionario["Tiempo de espera promedio"]["Laboratorio"] = self.tiempoEsperaPromedioAcLaboratorio
-
-
-            elif nombre_area == "farmacia":
-                self.tiempoEsperaPromedioAcFarmacia += (paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
-                self.pacientesAtendidosFarmacia += 1
-                self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Farmacia")
-                self.diccionario["Cola de farmacia"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalFarmacia
-                self.diccionario["Tiempo de espera promedio"]["Farmacia"] = self.tiempoEsperaPromedioAcFarmacia
-
-            if area_atencion.cola_area:
-                siguiente_paciente = area_atencion.cola_area.pop(0)
-                llave = self.buscar_key(area_atencion.nombre, "Cola de")
-                cola = int(self.diccionario[llave]["Cola"])
-                cola -= 1
-                self.diccionario[llave]["Cola"] = str(cola)
-                siguiente_paciente.estado = "siendo_atendido"
-                siguiente_paciente.tiempo_inicio_atencion = self.reloj
-                siguiente_paciente.medico_asignado = medico
-                tiempo_atencion = generar_tiempo_atencion(area_atencion.media_atencion)
-                fin_atencion = self.reloj + tiempo_atencion
-                llave = self.buscar_key(area_atencion.nombre, "Fin atencion")
-                self.diccionario[llave]["Tiempo atencion"] = tiempo_atencion
-                self.diccionario[llave]["Fin atencion"] = fin_atencion
-                self.eventos.append((f"fin_atencion_paciente_{area_atencion.nombre}", fin_atencion))
-                llave = self.buscar_key(area_atencion.nombre, "Cola de")
-                medico.estado = "atendiendo"
-                medico_key = "Medico " + str(1 + medico.id)
-                area_atencion.pacientesAtendidos.append(siguiente_paciente)
-                self.diccionario[llave][medico_key] = "atendiendo"
-
-                ##
-                self.escribir_fila_tablaResultados(area_atencion.nombre, "fin_atencion", None, None, tiempo_atencion,
-                                                    fin_atencion,
-                                                    self.pacientesAtendidosConsulta, self.pacientesAtendidosOdontologia,
-                                                    self.pacientesAtendidosPediatria,
-                                                    self.pacientesAtendidosLaboratorio, self.pacientesAtendidosFarmacia,self.mostrar_desde, self.nro_evento_simulado, self.lineas)
-            else:
-                self.escribir_fila_tablaResultados(area_atencion.nombre, "fin_atencion", None, None, None, None,
-                                                    self.pacientesAtendidosConsulta, self.pacientesAtendidosOdontologia,
-                                                    self.pacientesAtendidosPediatria,
-                                                    self.pacientesAtendidosLaboratorio, self.pacientesAtendidosFarmacia,self.mostrar_desde, self.nro_evento_simulado, self.lineas)
+            self.tiempoEsperaPromedioAcOdontologia += (
+                    paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
+            self.pacientesAtendidosOdontologia += 1
+            self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Odontologia")
+            self.diccionario["Cola de odontologia"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalOdontologia
+            self.diccionario["Tiempo de espera promedio"]["Odontologia"] = self.tiempoEsperaPromedioAcOdontologia
+        elif nombre_area == "pediatria":
+            self.tiempoEsperaPromedioAcPediatria += (
+                    paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
+            self.pacientesAtendidosPediatria += 1
+            self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Pediatria")
+            self.diccionario["Cola de pediatria"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalPediatria
+            self.diccionario["Tiempo de espera promedio"]["Pediatria"] = self.tiempoEsperaPromedioAcPediatria
+        elif nombre_area == "laboratorio":
+            self.tiempoEsperaPromedioAcLaboratorio += (
+                    paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
+            self.pacientesAtendidosLaboratorio += 1
+            self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Laboratorio")
+            self.diccionario["Cola de laboratorio"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalFarmacia
+            self.diccionario["Tiempo de espera promedio"]["Laboratorio"] = self.tiempoEsperaPromedioAcLaboratorio
+        elif nombre_area == "farmacia":
+            self.tiempoEsperaPromedioAcFarmacia += (
+                    paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
+            self.pacientesAtendidosFarmacia += 1
+            self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Farmacia")
+            self.diccionario["Cola de farmacia"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalFarmacia
+            self.diccionario["Tiempo de espera promedio"]["Farmacia"] = self.tiempoEsperaPromedioAcFarmacia
+        if area_atencion.cola_area:
+            siguiente_paciente = area_atencion.cola_area.pop(0)
+            llave = self.buscar_key(area_atencion.nombre, "Cola de")
+            cola = int(self.diccionario[llave]["Cola"])
+            cola -= 1
+            self.diccionario[llave]["Cola"] = str(cola)
+            siguiente_paciente.estado = "siendo_atendido"
+            siguiente_paciente.tiempo_inicio_atencion = self.reloj
+            siguiente_paciente.medico_asignado = medico
+            tiempo_atencion = generar_tiempo_atencion(area_atencion.media_atencion)
+            fin_atencion = self.reloj + tiempo_atencion
+            llave = self.buscar_key(area_atencion.nombre, "Fin atencion")
+            self.diccionario[llave]["Tiempo atencion"] = tiempo_atencion
+            self.diccionario[llave]["Fin atencion"] = fin_atencion
+            siguiente_paciente.tiempo_aux = str(fin_atencion)
+            numero = str(1 + medico.id)
+            self.diccionario[llave][numero] = fin_atencion
+            self.eventos.append((f"fin_atencion_paciente_{area_atencion.nombre}", fin_atencion))
+            llave = self.buscar_key(area_atencion.nombre, "Cola de")
+            medico.estado = "atendiendo"
+            medico_key = "Medico " + str(1 + medico.id)
+            area_atencion.pacientesAtendidos.append(siguiente_paciente)
+            self.diccionario[llave][medico_key] = "atendiendo"
+            self.escribir_fila_tablaResultados(area_atencion.nombre, "fin_atencion", None, None, tiempo_atencion,
+                                                   fin_atencion,
+                                                   self.pacientesAtendidosConsulta, self.pacientesAtendidosOdontologia,
+                                                   self.pacientesAtendidosPediatria,
+                                                   self.pacientesAtendidosLaboratorio, self.pacientesAtendidosFarmacia,
+                                                   self.mostrar_desde, self.nro_evento_simulado, self.lineas, numero)
+        else:
+            self.escribir_fila_tablaResultados(area_atencion.nombre, "fin_atencion", None, None, None, None,
+                                               self.pacientesAtendidosConsulta, self.pacientesAtendidosOdontologia,
+                                               self.pacientesAtendidosPediatria,
+                                               self.pacientesAtendidosLaboratorio, self.pacientesAtendidosFarmacia,
+                                               self.mostrar_desde, self.nro_evento_simulado, self.lineas, numero)
 
     def actualizar_tiempo_promedio(self, area_atencion, paciente_atendido, area_nombre):
-            paciente_atendido.tiempo_salida = self.reloj
+        paciente_atendido.tiempo_salida = self.reloj
 
-            if area_nombre == "Consulta general":
-                
-                self.tiempoPermanenciaTotalConsulta += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
-                
-            elif area_nombre == "Odontologia":
-                self.tiempoPermanenciaTotalOdontologia += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
-                
-            elif area_nombre == "Pediatria":
-                self.tiempoPermanenciaTotalPediatria += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
-                
-            elif area_nombre == "Laboratorio":
-                self.tiempoPermanenciaTotalLaboratorio += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
-                
-            elif area_nombre == "Farmacia":
-                self.tiempoPermanenciaTotalFarmacia += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
+        if area_nombre == "Consulta general":
 
-    def calcularTiempoOcupado(self, area, pacienteAtendido): 
-                    # Verificar si hay al menos un médico atendiendo
-            hay_medico_atendiendo = any(medico.estado == "atendiendo" for medico in area.medicos)
+            self.tiempoPermanenciaTotalConsulta += (
+                                                           paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
 
-            # Acumular tiempo ocupado solo si hay al menos un médico atendiendo
-            if hay_medico_atendiendo:
-                if area.primer_inicio_atencion is None:
-                    area.primer_inicio_atencion = pacienteAtendido.tiempo_inicio_atencion
+        elif area_nombre == "Odontologia":
+            self.tiempoPermanenciaTotalOdontologia += (
+                                                              paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
 
-                  
-                if area.nombre == "consulta":
-                    self.tiempoOcupadoConsulta = (self.reloj - area.primer_inicio_atencion)
-                elif area.nombre == "odontologia":
-                    self.tiempoOcupadoOdontologia = (self.reloj - area.primer_inicio_atencion)
-                elif area.nombre == "pediatria":
-                    self.tiempoOcupadoPediatria = (self.reloj - area.primer_inicio_atencion)
-                elif area.nombre == "laboratorio":
-                    self.tiempoOcupadoLaboratorio = (self.reloj - area.primer_inicio_atencion)
-                elif area.nombre == "farmacia":
-                    self.tiempoOcupadoFarmacia = (self.reloj - area.primer_inicio_atencion)
+        elif area_nombre == "Pediatria":
+            self.tiempoPermanenciaTotalPediatria += (
+                                                            paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
 
-            # Reiniciar el registro del primer inicio de atención si todos los médicos están libres
-            if all(medico.estado == "libre" for medico in area.medicos):
-                area.primer_inicio_atencion = None
+        elif area_nombre == "Laboratorio":
+            self.tiempoPermanenciaTotalLaboratorio += (
+                                                              paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
+
+        elif area_nombre == "Farmacia":
+            self.tiempoPermanenciaTotalFarmacia += (
+                                                           paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
+
+    def calcularTiempoOcupado(self, area, pacienteAtendido):
+        # Verificar si hay al menos un médico atendiendo
+        hay_medico_atendiendo = any(medico.estado == "atendiendo" for medico in area.medicos)
+
+        # Acumular tiempo ocupado solo si hay al menos un médico atendiendo
+        if hay_medico_atendiendo:
+            if area.primer_inicio_atencion is None:
+                area.primer_inicio_atencion = pacienteAtendido.tiempo_inicio_atencion
+
+            if area.nombre == "consulta":
+                self.tiempoOcupadoConsulta = (self.reloj - area.primer_inicio_atencion)
+            elif area.nombre == "odontologia":
+                self.tiempoOcupadoOdontologia = (self.reloj - area.primer_inicio_atencion)
+            elif area.nombre == "pediatria":
+                self.tiempoOcupadoPediatria = (self.reloj - area.primer_inicio_atencion)
+            elif area.nombre == "laboratorio":
+                self.tiempoOcupadoLaboratorio = (self.reloj - area.primer_inicio_atencion)
+            elif area.nombre == "farmacia":
+                self.tiempoOcupadoFarmacia = (self.reloj - area.primer_inicio_atencion)
+
+        # Reiniciar el registro del primer inicio de atención si todos los médicos están libres
+        if all(medico.estado == "libre" for medico in area.medicos):
+            area.primer_inicio_atencion = None
+
     def calcularEstadisticas(self):
 
         if self.pacientes_atendidos > 0:
@@ -520,7 +545,7 @@ class SimulacionCentroSalud:
 
             tiempoEsperaPromedioConsulta = self.tiempoEsperaPromedioAcConsulta / self.pacientesAtendidosConsulta
             porcentajeConsulta = (self.tiempoOcupadoConsulta / self.reloj) * 100
-            
+
         else:
             tiempoEsperaPromedioConsulta = 0
             porcentajeConsulta = 0
@@ -535,7 +560,7 @@ class SimulacionCentroSalud:
         if self.pacientesAtendidosPediatria > 0:
             tiempoEsperaPromedioPediatria = self.tiempoEsperaPromedioAcPediatria / self.pacientesAtendidosPediatria
             porcentajePediatria = (self.tiempoOcupadoPediatria * 100) / self.reloj
-            print(self.reloj)
+
         else:
             tiempoEsperaPromedioPediatria = 0
             porcentajePediatria = 0
@@ -543,8 +568,6 @@ class SimulacionCentroSalud:
         if self.pacientesAtendidosLaboratorio > 0:
             tiempoEsperaPromedioLaboratorio = self.tiempoEsperaPromedioAcLaboratorio / self.pacientesAtendidosLaboratorio
             porcentajeLaboratorio = (self.tiempoOcupadoLaboratorio * 100) / self.reloj
-            print(self.tiempoOcupadoLaboratorio)
-            print(self.reloj)
         else:
             tiempoEsperaPromedioLaboratorio = 0
             porcentajeLaboratorio = 0
@@ -556,15 +579,16 @@ class SimulacionCentroSalud:
             tiempoEsperaPromedioFarmacia = 0
             porcentajeFarmacia = 0
 
-        return (self.pacientes_atendidos, tiempoEsperaPromedioTotal, tiempoEsperaPromedioConsulta, 
-                tiempoEsperaPromedioOdontologia, tiempoEsperaPromedioPediatria, tiempoEsperaPromedioLaboratorio, 
-                tiempoEsperaPromedioFarmacia, tiempoPermanenciaTotal , porcentajeConsulta, porcentajeOdontologia, porcentajePediatria, 
-                porcentajeLaboratorio, porcentajeFarmacia, self.pacientesAtendidosConsulta, 
-                self.pacientesAtendidosOdontologia, self.pacientesAtendidosPediatria, 
-                self.pacientesAtendidosFarmacia, self.pacientesAtendidosLaboratorio, 
-                self.tiempoPermanenciaTotalConsulta, self.tiempoPermanenciaTotalFarmacia, 
-                self.tiempoPermanenciaTotalLaboratorio, self.tiempoPermanenciaTotalOdontologia, self.tiempoPermanenciaTotalOdontologia)
-
+        return (self.pacientes_atendidos, tiempoEsperaPromedioTotal, tiempoEsperaPromedioConsulta,
+                tiempoEsperaPromedioOdontologia, tiempoEsperaPromedioPediatria, tiempoEsperaPromedioLaboratorio,
+                tiempoEsperaPromedioFarmacia, self.tiempoPermanenciaTotal, porcentajeConsulta, porcentajeOdontologia,
+                porcentajePediatria,
+                porcentajeLaboratorio, porcentajeFarmacia, self.pacientesAtendidosConsulta,
+                self.pacientesAtendidosOdontologia, self.pacientesAtendidosPediatria,
+                self.pacientesAtendidosFarmacia, self.pacientesAtendidosLaboratorio,
+                self.tiempoPermanenciaTotalConsulta, self.tiempoPermanenciaTotalFarmacia,
+                self.tiempoPermanenciaTotalLaboratorio, self.tiempoPermanenciaTotalOdontologia,
+                self.tiempoPermanenciaTotalOdontologia)
 
     # -------------------------- Metodos extra ------------------------------------------
 
@@ -581,62 +605,71 @@ class SimulacionCentroSalud:
             else:
                 vector.append(value)
         return vector
-    
+
     # Metodo para buscar keys
     def buscar_key(self, nombre_area, evento):
         claves_encontradas = [clave for clave in self.diccionario.keys() if
-                                nombre_area in clave and clave.startswith(evento)]
+                              nombre_area in clave and clave.startswith(evento)]
         if claves_encontradas:
             return claves_encontradas[0]
         else:
             raise KeyError(f"No se encontró la clave para {nombre_area} con evento {evento}")
 
     def escribir_fila_tablaResultados(self, area, evento, tiempo_entre_llegadas, proxima_llegada, tiempo_atencion,
-                                        fin_atencion,
-                                        pacientesAtendidosConsulta, pacientesAtendidosOdontologia,
-                                        pacientesAtendidosPediatria,
-                                        pacientesAtendidosLaboratorio, pacientesAtendidosFarmacia, mostrar_desde,
-                                        nro_evento_simulado, lineas):
-            evento_map = {
-                "consulta": ("llegada_paciente_consulta", "Fin atencion consulta"),
-                "odontologia": ("llegada_paciente_odontologia", "Fin atencion odontologia"),
-                "pediatria": ("llegada_paciente_pediatria", "Fin atencion pediatria"),
-                "laboratorio": ("llegada_paciente_laboratorio", "Fin atencion laboratorio"),
-                "farmacia": ("llegada_paciente_farmacia", "Fin atencion farmacia")
-            }
+                                      fin_atencion,
+                                      pacientesAtendidosConsulta, pacientesAtendidosOdontologia,
+                                      pacientesAtendidosPediatria,
+                                      pacientesAtendidosLaboratorio, pacientesAtendidosFarmacia, mostrar_desde,
+                                      nro_evento_simulado, lineas, numero):
+        evento_map = {
+            "consulta": ("llegada_paciente_consulta", "Fin atencion consulta"),
+            "odontologia": ("llegada_paciente_odontologia", "Fin atencion odontologia"),
+            "pediatria": ("llegada_paciente_pediatria", "Fin atencion pediatria"),
+            "laboratorio": ("llegada_paciente_laboratorio", "Fin atencion laboratorio"),
+            "farmacia": ("llegada_paciente_farmacia", "Fin atencion farmacia")
+        }
+        areas22 = ["consulta", "odontologia", "pediatria", "laboratorio", "farmacia"]
 
-            if area not in evento_map:
-                raise ValueError("Área no reconocida")
+        if area not in evento_map:
+            raise ValueError("Área no reconocida")
 
-            llegada_evento, fin_atencion_evento = evento_map[area]
-            # Redondear a 4 decimales
-            if tiempo_entre_llegadas is not None:
-                tiempo_entre_llegadas = round(tiempo_entre_llegadas, 4)
-            if proxima_llegada is not None:
-                proxima_llegada = round(proxima_llegada, 4)
+        llegada_evento, fin_atencion_evento = evento_map[area]
+        # Redondear a 4 decimales
+        if tiempo_entre_llegadas is not None:
+            tiempo_entre_llegadas = round(tiempo_entre_llegadas, 4)
+        if proxima_llegada is not None:
+            proxima_llegada = round(proxima_llegada, 4)
 
-            if evento == "llegada":
-                self.diccionario[f"llegada paciente {area}"]["Tiempo entre llegadas"] = tiempo_entre_llegadas
-                self.diccionario[f"llegada paciente {area}"]["Proxima llegada"] = proxima_llegada
+        if evento == "llegada":
+            self.diccionario[f"llegada paciente {area}"]["Tiempo entre llegadas"] = tiempo_entre_llegadas
+            self.diccionario[f"llegada paciente {area}"]["Proxima llegada"] = proxima_llegada
+            for area in areas22:
+                self.diccionario[f"Fin atencion {area}"]["Tiempo atencion"] = "-"
+                self.diccionario[f"Fin atencion {area}"]["Fin atencion"] = "-"
 
-            elif evento == "fin_atencion":
-                if tiempo_atencion is not None:
-                    self.diccionario[f"Fin atencion {area}"]["Tiempo atencion"] = tiempo_atencion
-                    self.diccionario[f"Fin atencion {area}"]["Fin atencion"] = fin_atencion
+        elif evento == "fin_atencion":
+            if tiempo_atencion is not None:
+                self.diccionario[f"Fin atencion {area}"]["Tiempo atencion"] = tiempo_atencion
+                self.diccionario[f"Fin atencion {area}"]["Fin atencion"] = fin_atencion
+            else:
+                for area in areas22:
+                    self.diccionario[f"Fin atencion {area}"]["Tiempo atencion"] = "-"
+                    self.diccionario[f"Fin atencion {area}"]["Fin atencion"] = "-"
 
-            self.diccionario["Evento"] = llegada_evento if evento == "llegada" else fin_atencion_evento
-            self.diccionario["Reloj"] = self.reloj
+        self.diccionario["Evento"] = llegada_evento if evento == "llegada" else fin_atencion_evento
+        self.diccionario["Reloj"] = self.reloj
 
-            self.diccionario["Cola de consultas generales"]["Contador"] = pacientesAtendidosConsulta
-            self.diccionario["Cola de odontologia"]["Contador"] = pacientesAtendidosOdontologia
-            self.diccionario["Cola de pediatria"]["Contador"] = pacientesAtendidosPediatria
-            self.diccionario["Cola de laboratorio"]["Contador"] = pacientesAtendidosLaboratorio
-            self.diccionario["Cola de farmacia"]["Contador"] = pacientesAtendidosFarmacia
+        self.diccionario["Cola de consultas generales"]["Contador"] = pacientesAtendidosConsulta
+        self.diccionario["Cola de odontologia"]["Contador"] = pacientesAtendidosOdontologia
+        self.diccionario["Cola de pediatria"]["Contador"] = pacientesAtendidosPediatria
+        self.diccionario["Cola de laboratorio"]["Contador"] = pacientesAtendidosLaboratorio
+        self.diccionario["Cola de farmacia"]["Contador"] = pacientesAtendidosFarmacia
 
-            if (mostrar_desde <= nro_evento_simulado <= mostrar_desde + 299) or nro_evento_simulado == lineas:
-                lista = self.diccionario_vector()
-                self.tablaResultados.append(lista)
-            
+        if (mostrar_desde <= nro_evento_simulado <= mostrar_desde + 299) or nro_evento_simulado == lineas:
+            lista = self.diccionario_vector()
+            self.tablaResultados.append(lista)
+
+
 #-----------------------------------------------------------------------------------------------
 
 class VentanaInicial(QWidget):
@@ -803,11 +836,12 @@ class VentanaSimulacion(QWidget):
             'llegada paciente Pediatria.Tiempo entre llegadas', 'llegada paciente Pediatria.Proxima llegada',
             'llegada paciente Laboratorio.Tiempo entre llegadas', 'llegada paciente Laboratorio.Proxima llegada',
             'llegada paciente Farmacia.Tiempo entre llegadas', 'llegada paciente Farmacia.Proxima llegada',
-            'fin atencion consulta.Tiempo atencion', 'fin atencion consulta.Fin atencion',
+            'fin atencion consulta.Tiempo atencion', 'fin atencion consulta.Fin atencion', '1', '2', '3', '4', '5',
             'fin atencion odontologia.Tiempo atencion', 'fin atencion odontologia.Fin atencion',
-            'fin atencion Pediatria.Tiempo atencion', 'fin atencion Pediatria.Fin atencion',
-            'fin atencion laboratorio.Tiempo atencion', 'fin atencion laboratorio.Fin atencion',
-            'fin atencion farmacia.Tiempo atencion', 'fin atencion farmacia.Fin atencion',
+            '1', '2', '3',
+            'fin atencion Pediatria.Tiempo atencion', 'fin atencion Pediatria.Fin atencion', '1', '2',
+            'fin atencion laboratorio.Tiempo atencion', 'fin atencion laboratorio.Fin atencion', '1', '2', '3', '4',
+            'fin atencion farmacia.Tiempo atencion', 'fin atencion farmacia.Fin atencion', '1', '2',
             'Tiempo de espera Promedio.Consulta general', 'Tiempo de espera Promedio.Odontologia',
             'Tiempo de espera Promedio.Pediatria', 'Tiempo de espera Promedio.Laboratorio',
             'Tiempo de espera Promedio.Farmacia', 'Cola de consultas generales.Medico 1',
@@ -845,18 +879,17 @@ class VentanaSimulacion(QWidget):
                 tabla.setItem(i, j, item)
 
     def mostrar_tiempo_espera(self, resultados_finales):
-        pacientesAtendidos, tiempoEsperaPromedioTotal, tiempoEsperaPromedioConsulta, tiempoEsperaPromedioOdontologia, tiempoEsperaPromedioPediatria, tiempoEsperaPromedioLaboratorio, tiempoEsperaPromedioFarmacia, tiempoPermanenciaTotal , porcentajeConsulta, porcentajeOdontologia, porcentajePediatria, porcentajeLaboratorio, porcentajeFarmacia, pacientesAtendidosConsulta, pacientesAtendidosOdontologia, pacientesAtendidosPediatria, pacientesAtendidosFarmacia, pacientesAtendidosLaboratorio, tiempoPermanenciaTotalConsulta, tiempoPermanenciaTotalFarmacia, tiempoPermanenciaTotalLaboratorio, tiempoPermanenciaTotalOdontologia, tiempoPermanenciaTotalOdontologia = resultados_finales
+        pacientesAtendidos, tiempoEsperaPromedioTotal, tiempoEsperaPromedioConsulta, tiempoEsperaPromedioOdontologia, tiempoEsperaPromedioPediatria, tiempoEsperaPromedioLaboratorio, tiempoEsperaPromedioFarmacia, tiempoPermanenciaTotal, porcentajeConsulta, porcentajeOdontologia, porcentajePediatria, porcentajeLaboratorio, porcentajeFarmacia, pacientesAtendidosConsulta, pacientesAtendidosOdontologia, pacientesAtendidosPediatria, pacientesAtendidosFarmacia, pacientesAtendidosLaboratorio, tiempoPermanenciaTotalConsulta, tiempoPermanenciaTotalFarmacia, tiempoPermanenciaTotalLaboratorio, tiempoPermanenciaTotalOdontologia, tiempoPermanenciaTotalOdontologia = resultados_finales
 
         texto_resultados_general = f"Pacientes atendidos: {pacientesAtendidos}\nTiempo de espera promedio general: {tiempoEsperaPromedioTotal:.2f} minutos"
-        
-        texto_resultados_especialidad = f"\nTiempo de espera promedio por especialidad:\n"
-        texto_resultados_especialidad += f"Consulta: {tiempoEsperaPromedioConsulta:.2f} minutos. Porcentaje de ocupacion: {round(porcentajeConsulta,2)}%\n"
-        texto_resultados_especialidad += f"Odontología: {tiempoEsperaPromedioOdontologia:.2f} minutos. Porcentaje de ocupacion : {round(porcentajeOdontologia,2)}%\n"
-        texto_resultados_especialidad += f"Pediatria: {tiempoEsperaPromedioPediatria:.2f} minutos. Porcentaje de ocupacion: {round(porcentajePediatria,2)}%\n"
-        texto_resultados_especialidad += f"Laboratorio: {tiempoEsperaPromedioLaboratorio:.2f} minutos. Porcentaje de ocupacion: {round(porcentajeLaboratorio,2)}%\n"
-        texto_resultados_especialidad += f"Farmacia: {tiempoEsperaPromedioFarmacia:.2f} minutos. Porcentaje de ocupacion: {round(porcentajeFarmacia,2)}%\n"
 
-        
+        texto_resultados_especialidad = f"\nTiempo de espera promedio por especialidad:\n"
+        texto_resultados_especialidad += f"Consulta: {tiempoEsperaPromedioConsulta:.2f} minutos. Porcentaje de ocupacion: {round(porcentajeConsulta, 2)}%\n"
+        texto_resultados_especialidad += f"Odontología: {tiempoEsperaPromedioOdontologia:.2f} minutos. Porcentaje de ocupacion : {round(porcentajeOdontologia, 2)}%\n"
+        texto_resultados_especialidad += f"Pediatria: {tiempoEsperaPromedioPediatria:.2f} minutos. Porcentaje de ocupacion: {round(porcentajePediatria, 2)}%\n"
+        texto_resultados_especialidad += f"Laboratorio: {tiempoEsperaPromedioLaboratorio:.2f} minutos. Porcentaje de ocupacion: {round(porcentajeLaboratorio, 2)}%\n"
+        texto_resultados_especialidad += f"Farmacia: {tiempoEsperaPromedioFarmacia:.2f} minutos. Porcentaje de ocupacion: {round(porcentajeFarmacia, 2)}%\n"
+
         pacientesporarea = f"Pacientes atendidos en Consulta: {pacientesAtendidosConsulta}\n"
         pacientesporarea += f"Pacientes atendidos en Odontologia: {pacientesAtendidosOdontologia}\n"
         pacientesporarea += f"Pacientes atendidos en Pediatria: {pacientesAtendidosPediatria}\n"
