@@ -114,32 +114,34 @@ class SimulacionCentroSalud:
                 "Proxima llegada": "0"
             },
             "Fin atencion consulta": {
-                "Tiempo atencion": "0",
-                "Fin atencion": "0",
-                "1": "0", "2": "0", "3": "0", "4": "0", "5": "0"
+                "Tiempo atencion": "-",
+                "Fin atencion": "-",
+                "1": "-", "2": "-", "3": "-", "4": "-", "5": "-"
             },
             "Fin atencion odontologia": {
-                "Tiempo atencion": "0",
-                "Fin atencion": "0",
-                "1": "0", "2": "0", "3": "0"
+                "Tiempo atencion": "-",
+                "Fin atencion": "-",
+                "1": "-", "2": "-", "3": "-"
             
             },
             "Fin atencion pediatria": {
-                "Tiempo atencion": "0",
-                "Fin atencion": "0",
-                "Fin atencion": "0", "1": "0", "2": "0",
+                "Tiempo atencion": "-",
+                "Fin atencion": "-",
+                "Fin atencion": "-", 
+                "1": "-", "2": "-",
                 
             },
             "Fin atencion laboratorio": {
-                "Tiempo atencion": "0",
-                "Fin atencion": "0",
-                "1": "0", "2": "0", "3": "0", "4": "0"
+                "Tiempo atencion": "-",
+                "Fin atencion": "-",
+                "1": "-", "2": "-", "3": "-", "4": "-"
                 
             },
             "Fin atencion farmacia": {
-                "Tiempo atencion": "0",
-                "Fin atencion": "0",
-                "Fin atencion": "0", "1": "0", "2": "0"
+                "Tiempo atencion": "-",
+                "Fin atencion": "-",
+                "Fin atencion": "-", 
+                "1": "-", "2": "-"
             },
             "Tiempo de espera promedio": {
                 "Consulta general": "0",
@@ -189,10 +191,12 @@ class SimulacionCentroSalud:
                 "Contador": "0",
                 "Tiempo de permanencia": "0"
             },
-            "Toma Servicio" : "No",
+            "RND Servicio": "-",
+            "Toma Servicio" : "-",
             "Fin atencion nutricion": {
-                "Tiempo atencion": "0",
-                "Fin atencion": "0"
+                "Tiempo atencion": "-",
+                "Fin atencion": "-",
+                "1": "0"
             },
              "Cola de nutricion": {
                 "Medico 1": "Libre",
@@ -258,6 +262,8 @@ class SimulacionCentroSalud:
 
         # Nutricion se maneja con el random, no con tiempo de llegadas
         if area_atencion.nombre != "nutricion":
+            self.diccionario['RND Servicio'] = "-"
+            self.diccionario['Toma Servicio'] = "-"
             tiempo_entre_llegadas = generar_tiempo_entre_llegadas(area_atencion.media_llegada)
             proxima_llegada = self.reloj + tiempo_entre_llegadas
             llave = self.buscar_key(area_atencion.nombre, "llegada")
@@ -268,6 +274,9 @@ class SimulacionCentroSalud:
             # Esto es para el area de nutricion, recordemos que se maneja con el random
             tiempo_entre_llegadas = 0
             proxima_llegada = 0
+            self.diccionario['RND Servicio'] = "-"
+            self.diccionario['Toma Servicio'] = "-"
+            
 
         atendido = False
 
@@ -292,16 +301,17 @@ class SimulacionCentroSalud:
                 fin_atencion = self.reloj + tiempo_atencion
                 nuevo_paciente.tiempo_aux = str(fin_atencion) #
                 llave = self.buscar_key(area_atencion.nombre, "Fin")
+
                 self.diccionario[llave]["Fin atencion"] = fin_atencion
                 self.diccionario[llave]["Tiempo atencion"] = tiempo_atencion
                 self.eventos.append((f"fin_atencion_paciente_{area_atencion.nombre}", fin_atencion))
 
                 numero = str(1 + medico.id) #
                 self.diccionario[llave][numero] = fin_atencion #
-                medico.estado = "atendiendo"
+                medico.estado = "Atendiendo"
                 llave = self.buscar_key(area_atencion.nombre, "Cola de")
                 medico_key = "Medico " + str(1 + medico.id)
-                self.diccionario[llave][medico_key] = "atendiendo"
+                self.diccionario[llave][medico_key] = "Atendiendo"
 
                 area_atencion.agregar_paciente_atendido(nuevo_paciente)
                 atendido = True
@@ -322,7 +332,7 @@ class SimulacionCentroSalud:
                                             self.pacientesAtendidosConsulta, self.pacientesAtendidosOdontologia,
                                             self.pacientesAtendidosPediatria,
                                             self.pacientesAtendidosLaboratorio, self.pacientesAtendidosFarmacia,
-                                            self.mostrar_desde, self.nro_evento_simulado, self.lineas, numero, asiste_servicio)
+                                            self.mostrar_desde, self.nro_evento_simulado, self.lineas, asiste_servicio)
 
     def procesarFinAtencionPaciente(self, nombre_area):
             area_atencion = self.buscar_area(nombre_area)
@@ -349,7 +359,7 @@ class SimulacionCentroSalud:
                 self.diccionario[llave][medico_key] = "libre"
                 llave = self.buscar_key(area_atencion.nombre, "Fin")
                 numero = str(1 + medico.id)
-                self.diccionario[llave][numero] = "0"
+                self.diccionario[llave][numero] = "-"
 
             area_atencion.quitar_paciente_atendido(paciente_atendido)
 
@@ -364,7 +374,7 @@ class SimulacionCentroSalud:
                 self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Consulta general")
                 self.diccionario["Cola de consultas generales"][
                     "Tiempo de permanencia"]=self.tiempoPermanenciaTotalConsulta
-                self.diccionario["Tiempo de espera promedio"]["Consulta general"] = self.tiempoEsperaPromedioAcConsulta
+                self.diccionario["Tiempo de espera promedio"]["Consulta general"] = self.tiempoEsperaPromedioAcConsulta / self.pacientesAtendidosConsulta
             elif nombre_area == "odontologia":
 
                 self.tiempoEsperaPromedioAcOdontologia += (
@@ -372,7 +382,7 @@ class SimulacionCentroSalud:
                 self.pacientesAtendidosOdontologia += 1
                 self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Odontologia")
                 self.diccionario["Cola de odontologia"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalOdontologia
-                self.diccionario["Tiempo de espera promedio"]["Odontologia"] = self.tiempoEsperaPromedioAcOdontologia
+                self.diccionario["Tiempo de espera promedio"]["Odontologia"] = self.tiempoEsperaPromedioAcOdontologia / self.pacientesAtendidosOdontologia
 
             elif nombre_area == "pediatria":
                 self.tiempoEsperaPromedioAcPediatria += (
@@ -380,14 +390,14 @@ class SimulacionCentroSalud:
                 self.pacientesAtendidosPediatria += 1
                 self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Pediatria")
                 self.diccionario["Cola de pediatria"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalPediatria
-                self.diccionario["Tiempo de espera promedio"]["Pediatria"] = self.tiempoEsperaPromedioAcPediatria
+                self.diccionario["Tiempo de espera promedio"]["Pediatria"] = self.tiempoEsperaPromedioAcPediatria / self.pacientesAtendidosPediatria
             elif nombre_area == "laboratorio":
                 self.tiempoEsperaPromedioAcLaboratorio += (
                     paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
                 self.pacientesAtendidosLaboratorio += 1
                 self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Laboratorio")
                 self.diccionario["Cola de laboratorio"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalFarmacia
-                self.diccionario["Tiempo de espera promedio"]["Laboratorio"] = self.tiempoEsperaPromedioAcLaboratorio
+                self.diccionario["Tiempo de espera promedio"]["Laboratorio"] = self.tiempoEsperaPromedioAcLaboratorio / self.pacientesAtendidosLaboratorio
 
 
             elif nombre_area == "farmacia":
@@ -395,16 +405,22 @@ class SimulacionCentroSalud:
                 self.pacientesAtendidosFarmacia += 1
                 self.actualizar_tiempo_promedio(area_atencion, paciente_atendido, "Farmacia")
                 self.diccionario["Cola de farmacia"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalFarmacia
-                self.diccionario["Tiempo de espera promedio"]["Farmacia"] = self.tiempoEsperaPromedioAcFarmacia
+                self.diccionario["Tiempo de espera promedio"]["Farmacia"] = self.tiempoEsperaPromedioAcFarmacia / self.pacientesAtendidosFarmacia
 
             # Simulamos si va al nuevo servicio o no
-            asiste_servicio = False
+            asiste_servicio = None
             if area_atencion.nombre != "nutricion":
                 rnd = random.random()
+                self.diccionario["RND Servicio"] = rnd
                 if rnd <= 0.2:
                     asiste_servicio = True
                     # se genera una llegada para el mismo instante de tiempo
                     self.eventos.append(("llegada_paciente_nutricion", self.reloj))
+                    self.diccionario['Toma Servicio'] = 'Si'
+                else:
+                    asiste_servicio = False
+                    self.diccionario['Toma Servicio'] = "No"
+                
 
             if area_atencion.cola_area:
                 siguiente_paciente = area_atencion.cola_area.pop(0)
@@ -426,23 +442,23 @@ class SimulacionCentroSalud:
                 self.diccionario[llave][numero] = fin_atencion
                 self.eventos.append((f"fin_atencion_paciente_{area_atencion.nombre}", fin_atencion))
                 llave = self.buscar_key(area_atencion.nombre, "Cola de")
-                medico.estado = "atendiendo"
+                medico.estado = "Atendiendo"
                 medico_key = "Medico " + str(1 + medico.id)
                 area_atencion.pacientesAtendidos.append(siguiente_paciente)
-                self.diccionario[llave][medico_key] = "atendiendo"
+                self.diccionario[llave][medico_key] = "Atendiendo"
 
                 self.escribir_fila_tablaResultados(area_atencion.nombre, "fin_atencion", None, None, tiempo_atencion,
                                                     fin_atencion,
                                                     self.pacientesAtendidosConsulta, self.pacientesAtendidosOdontologia,
                                                     self.pacientesAtendidosPediatria,
                                                     self.pacientesAtendidosLaboratorio, self.pacientesAtendidosFarmacia,
-                                                    self.mostrar_desde, self.nro_evento_simulado, self.lineas, numero, asiste_servicio)
+                                                    self.mostrar_desde, self.nro_evento_simulado, self.lineas, asiste_servicio)
             else:
                 self.escribir_fila_tablaResultados(area_atencion.nombre, "fin_atencion", None, None, None, None,
                                                     self.pacientesAtendidosConsulta, self.pacientesAtendidosOdontologia,
                                                     self.pacientesAtendidosPediatria,
                                                     self.pacientesAtendidosLaboratorio, self.pacientesAtendidosFarmacia,
-                                                    self.mostrar_desde, self.nro_evento_simulado, self.lineas, numero, asiste_servicio)
+                                                    self.mostrar_desde, self.nro_evento_simulado, self.lineas, asiste_servicio)
 
     def actualizar_tiempo_promedio(self, area_atencion, paciente_atendido, area_nombre):
             paciente_atendido.tiempo_salida = self.reloj
@@ -509,14 +525,14 @@ class SimulacionCentroSalud:
 
         if self.pacientesAtendidosOdontologia > 0:
             tiempoEsperaPromedioOdontologia = self.tiempoEsperaPromedioAcOdontologia / self.pacientesAtendidosOdontologia
-            porcentajeOdontologia = (self.tiempoOcupadoOdontologia * 100) / self.reloj
+            porcentajeOdontologia = (self.tiempoOcupadoOdontologia / self.reloj) * 100
         else:
             tiempoEsperaPromedioOdontologia = 0
             porcentajeOdontologia = 0
 
         if self.pacientesAtendidosPediatria > 0:
             tiempoEsperaPromedioPediatria = self.tiempoEsperaPromedioAcPediatria / self.pacientesAtendidosPediatria
-            porcentajePediatria = (self.tiempoOcupadoPediatria * 100) / self.reloj
+            porcentajePediatria = (self.tiempoOcupadoPediatria / self.reloj) * 100
             #print(self.reloj)
         else:
             tiempoEsperaPromedioPediatria = 0
@@ -524,7 +540,7 @@ class SimulacionCentroSalud:
 
         if self.pacientesAtendidosLaboratorio > 0:
             tiempoEsperaPromedioLaboratorio = self.tiempoEsperaPromedioAcLaboratorio / self.pacientesAtendidosLaboratorio
-            porcentajeLaboratorio = (self.tiempoOcupadoLaboratorio * 100) / self.reloj
+            porcentajeLaboratorio = (self.tiempoOcupadoLaboratorio / self.reloj) * 100
             #print(self.tiempoOcupadoLaboratorio)
             #print(self.reloj)
         else:
@@ -533,7 +549,7 @@ class SimulacionCentroSalud:
 
         if self.pacientesAtendidosFarmacia > 0:
             tiempoEsperaPromedioFarmacia = self.tiempoEsperaPromedioAcFarmacia / self.pacientesAtendidosFarmacia
-            porcentajeFarmacia = (self.tiempoOcupadoFarmacia * 100) / self.reloj
+            porcentajeFarmacia = (self.tiempoOcupadoFarmacia / self.reloj) * 100
         else:
             tiempoEsperaPromedioFarmacia = 0
             porcentajeFarmacia = 0
@@ -580,7 +596,7 @@ class SimulacionCentroSalud:
                                         pacientesAtendidosConsulta, pacientesAtendidosOdontologia,
                                         pacientesAtendidosPediatria,
                                         pacientesAtendidosLaboratorio, pacientesAtendidosFarmacia, mostrar_desde,
-                                        nro_evento_simulado, lineas, numero, asiste_servicio):
+                                        nro_evento_simulado, lineas, asiste_servicio):
             evento_map = {
                 "consulta": ("llegada_paciente_consulta", "Fin atencion consulta"),
                 "odontologia": ("llegada_paciente_odontologia", "Fin atencion odontologia"),
@@ -630,12 +646,11 @@ class SimulacionCentroSalud:
             self.diccionario["Cola de laboratorio"]["Contador"] = pacientesAtendidosLaboratorio
             self.diccionario["Cola de farmacia"]["Contador"] = pacientesAtendidosFarmacia
 
-            # datos para el servicio extra
-            if asiste_servicio:
-                self.diccionario["Toma Servicio"] = "Si"
-            else:
-                self.diccionario["Toma Servicio"] = "No"
+            
 
+            
             if (mostrar_desde <= nro_evento_simulado <= mostrar_desde + 299) or nro_evento_simulado == lineas:
                 lista = self.diccionario_vector()
                 self.tablaResultados.append(lista)
+            
+            

@@ -1,7 +1,7 @@
 from simulacionCentroSalud import SimulacionCentroSalud
 from PyQt5.QtWidgets import QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, \
     QPushButton, QScrollArea
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QFont, QBrush
 
 
 class VentanaSimulacion(QWidget):
@@ -83,11 +83,27 @@ class VentanaSimulacion(QWidget):
             'Cola de Laboratorio.Medico 2', 'Cola de Laboratorio.Medico 3', 'Cola de Laboratorio.Medico 4',
             'Cola de Laboratorio.Cola', 'Cola de Laboratorio.Contador', 'Cola de Laboratorio.Tiempo de permanencia',
             'Cola de Farmacia.Medico 1', 'Cola de Farmacia.Medico 2', 'Cola de Farmacia.Cola',
-            'Cola de Farmacia.Contador', 'Cola de Farmacia.Tiempo de permanencia', 'Toma SS Nutri', 'Tiempo de Atencion Nutri','Fin de atencion Nutri','Estado Medico 1 Nutri', 'Cola Nutri']
+            'Cola de Farmacia.Contador', 'Cola de Farmacia.Tiempo de permanencia', 'RND Servicio', 'Toma SS Nutri', 'fin atencion nutricion.Tiempo de Atencion Nutri','fin atencion nutricion.Fin de atencion Nutri','1','Estado Medico 1 Nutri', 'Cola Nutri']
 
         # Fijar la cantidad de columnas y sus encabezados
         tabla.setColumnCount(len(encabezado_tabla))
         tabla.setHorizontalHeaderLabels(encabezado_tabla)
+        
+        header = tabla.horizontalHeader()
+        header.setStyleSheet("""
+            QHeaderView::section {
+                background-color: #f0f0f0; /* Color gris claro */
+                font-weight: bold;
+                border: none; /* Eliminar bordes */
+                padding: 6px; /* Añadir un poco de espacio interno */
+            }
+        """)
+        # Ajustar las columnas al contenido
+        tabla.resizeColumnsToContents()
+
+        # Aplicar estilo a los encabezados
+
+
 
         # Llenar la tabla con los datos de tablaResultados
         for i, resultado in enumerate(tablaResultados):
