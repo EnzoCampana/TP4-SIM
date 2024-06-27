@@ -278,7 +278,6 @@ class SimulacionCentroSalud:
             self.diccionario['Toma Servicio'] = "-"
             tiempo_entre_llegadas, rndLlegada = generar_tiempo_entre_llegadas(area_atencion.media_llegada)
             proxima_llegada = self.reloj + tiempo_entre_llegadas
-            print(tiempo_entre_llegadas)
             llave = self.buscar_key(area_atencion.nombre, "llegada")
             self.diccionario[llave]["RND"] = rndLlegada
             self.diccionario[llave]["Tiempo entre llegadas"] = tiempo_entre_llegadas
