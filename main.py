@@ -24,7 +24,7 @@ class VentanaInicial(QWidget):
 
         self.layout.addWidget(QLabel('Mostrar desde la línea:'))
         self.mostrar_desde_entry = QLineEdit()
-        self.mostrar_desde_entry.setText('12')  # Valor predeterminado
+        self.mostrar_desde_entry.setText('1')  # Valor predeterminado
         self.layout.addWidget(self.mostrar_desde_entry)
 
         self.layout.addWidget(QLabel('Llegada consulta general por hora:'))
