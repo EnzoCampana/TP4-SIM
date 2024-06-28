@@ -2,6 +2,7 @@ from area import Area
 from paciente import Paciente
 import random
 import math
+import json
 
 def generar_tiempo_exponencial(lambdaValor):
     media = 1 / (lambdaValor / 60)
@@ -206,6 +207,7 @@ class SimulacionCentroSalud:
             "RND Servicio": "-",
             "Toma Servicio" : "-",
             "Fin atencion nutricion": {
+                "RND": "-",
                 "Tiempo atencion": "-",
                 "Fin atencion": "-",
                 "1": "-"
@@ -288,7 +290,7 @@ class SimulacionCentroSalud:
             proxima_llegada = self.reloj + tiempo_entre_llegadas
             llave = self.buscar_key(area_atencion.nombre, "llegada")
 
-            self.limpiar_rnd_otras_areas(area_atencion.nombre) # Limpiamos
+           
 
             self.diccionario[llave]["RND"] = rndLlegada
             self.diccionario[llave]["Tiempo entre llegadas"] = tiempo_entre_llegadas
@@ -364,6 +366,8 @@ class SimulacionCentroSalud:
                                             self.pacientesAtendidosPediatria,
                                             self.pacientesAtendidosLaboratorio, self.pacientesAtendidosFarmacia,
                                             self.mostrar_desde, self.nro_evento_simulado, self.lineas, asiste_servicio)
+        
+        self.limpiar_rnd_otras_areas(area_atencion.nombre) # Limpiamos
 
     def procesarFinAtencionPaciente(self, nombre_area):
             area_atencion = self.buscar_area(nombre_area)
@@ -626,9 +630,8 @@ class SimulacionCentroSalud:
     def limpiar_rnd_otras_areas(self,nombre_area):
         for area in self.areas:
             if area.nombre != "nutricion":
-                if area.nombre != nombre_area:
-                    self.diccionario[self.buscar_key(area.nombre, "llegada")]["RND"] = "-"
-                    self.diccionario[self.buscar_key(area.nombre, "llegada")]["Tiempo entre llegadas"] = "-"
+                self.diccionario[self.buscar_key(area.nombre, "llegada")]["RND"] = "-"
+                self.diccionario[self.buscar_key(area.nombre, "llegada")]["Tiempo entre llegadas"] = "-"
 
 
     def escribir_fila_tablaResultados(self, area, evento, rndLlegada, rndAtencion, tiempo_entre_llegadas, proxima_llegada, tiempo_atencion,
@@ -702,6 +705,8 @@ class SimulacionCentroSalud:
             
             if (mostrar_desde <= nro_evento_simulado <= mostrar_desde + 299) or nro_evento_simulado == lineas:
                 lista = self.diccionario_vector()
+                if nro_evento_simulado == 50:
+                    print(json.dumps(self.diccionario, indent=4))
                 self.tablaResultados.append(lista)
             
             
