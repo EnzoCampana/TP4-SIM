@@ -257,10 +257,10 @@ class SimulacionCentroSalud:
 
 
             if len(self.eventos) > 0:
-                evento_actual = self.eventos.pop(0) # Elimina y devuelve el primer elemento de la lista 
+                evento_actual = self.eventos.pop(0)  # Elimina y devuelve el primer elemento de la lista
                 self.nro_evento_simulado += 1
-                self.reloj = evento_actual[1] # Agarra el tiempo para ponerlo como reloj
-                tipo_evento = evento_actual[0] # Agarra el tipo de evento
+                self.reloj = evento_actual[1]  # Agarra el tiempo para ponerlo como reloj
+                tipo_evento = evento_actual[0]  # Agarra el tipo de evento
 
                 if tipo_evento.startswith("llegada_paciente_"):
                     area_nombre = tipo_evento.split("_")[-1]
@@ -316,16 +316,21 @@ class SimulacionCentroSalud:
             if medico.estado == "libre":
                 nuevo_paciente.estado = "siendo_atendido"
                 nuevo_paciente.tiempo_inicio_atencion = self.reloj
-                if area_atencion.nombre == 'consulta': 
-                    self.tiempoEsperaPromedioAcConsulta+= (nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
+                if area_atencion.nombre == 'consulta':
+                    self.tiempoEsperaPromedioAcConsulta += (
+                            nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
                 elif area_atencion.nombre == 'odontologia':
-                    self.tiempoEsperaPromedioAcOdontologia += (nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
+                    self.tiempoEsperaPromedioAcOdontologia += (
+                            nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
                 elif area_atencion.nombre == 'pediatria':
-                    self.tiempoEsperaPromedioAcPediatria += (nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
+                    self.tiempoEsperaPromedioAcPediatria += (
+                            nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
                 elif area_atencion.nombre == 'laboratorio':
-                    self.tiempoEsperaPromedioAcLaboratorio += (nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
+                    self.tiempoEsperaPromedioAcLaboratorio += (
+                            nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
                 elif area_atencion.nombre == 'farmacia':
-                    self.tiempoEsperaPromedioAcFarmacia += (nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
+                    self.tiempoEsperaPromedioAcFarmacia += (
+                            nuevo_paciente.tiempo_inicio_atencion - nuevo_paciente.tiempo_ingreso)
 
                 nuevo_paciente.medico_asignado = medico
 
@@ -338,6 +343,8 @@ class SimulacionCentroSalud:
                 self.diccionario[llave]["Fin atencion"] = fin_atencion
                 self.diccionario[llave]["Tiempo atencion"] = tiempo_atencion
                 self.eventos.append((f"fin_atencion_paciente_{area_atencion.nombre}", fin_atencion))
+                numero = str(1 + medico.id)
+                self.diccionario[llave][numero] = fin_atencion
 
                 numero = str(1 + medico.id) #
                 self.diccionario[llave][numero] = fin_atencion #
@@ -352,7 +359,6 @@ class SimulacionCentroSalud:
 
         # Si no lo puede atender nadie, lo manda a la cola 
         if not atendido:
-            
             llave = self.buscar_key(area_atencion.nombre, "Cola de")
             cola = int(self.diccionario[llave]["Cola"])
             cola += 1
@@ -385,7 +391,7 @@ class SimulacionCentroSalud:
             
             self.pacientes_atendidos += 1
 
-            medico = paciente_atendido.medico_asignado
+        medico = paciente_atendido.medico_asignado
 
             if medico is not None:
                 medico.estado = "libre"
@@ -396,11 +402,11 @@ class SimulacionCentroSalud:
                 numero = str(1 + medico.id)
                 self.diccionario[llave][numero] = "-"
 
-            area_atencion.quitar_paciente_atendido(paciente_atendido)
+        area_atencion.quitar_paciente_atendido(paciente_atendido)
 
-            self.calcularTiempoOcupado( area_atencion, paciente_atendido)
-            # Agrego 1 al contador del area, actualizo los tiempos promedios de PERMANENCIA. Escribo en el diccionario
-            if nombre_area == "consulta":
+        self.calcularTiempoOcupado(area_atencion, paciente_atendido)
+        # Agrego 1 al contador del area, actualizo los tiempos promedios de PERMANENCIA. Escribo en el diccionario
+        if nombre_area == "consulta":
 
                 self.tiempoEsperaPromedioAcConsulta += (
                     paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
@@ -498,23 +504,28 @@ class SimulacionCentroSalud:
                                                     self.mostrar_desde, self.nro_evento_simulado, self.lineas, asiste_servicio)
 
     def actualizar_tiempo_promedio(self, area_atencion, paciente_atendido, area_nombre):
-            paciente_atendido.tiempo_salida = self.reloj
+        paciente_atendido.tiempo_salida = self.reloj
 
-            if area_nombre == "Consulta general":
-                
-                self.tiempoPermanenciaTotalConsulta += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
-                
-            elif area_nombre == "Odontologia":
-                self.tiempoPermanenciaTotalOdontologia += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
-                
-            elif area_nombre == "Pediatria":
-                self.tiempoPermanenciaTotalPediatria += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
-                
-            elif area_nombre == "Laboratorio":
-                self.tiempoPermanenciaTotalLaboratorio += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
-                
-            elif area_nombre == "Farmacia":
-                self.tiempoPermanenciaTotalFarmacia += (paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
+        if area_nombre == "Consulta general":
+
+            self.tiempoPermanenciaTotalConsulta += (
+                                                           paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
+
+        elif area_nombre == "Odontologia":
+            self.tiempoPermanenciaTotalOdontologia += (
+                                                              paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
+
+        elif area_nombre == "Pediatria":
+            self.tiempoPermanenciaTotalPediatria += (
+                                                            paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
+
+        elif area_nombre == "Laboratorio":
+            self.tiempoPermanenciaTotalLaboratorio += (
+                                                              paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
+
+        elif area_nombre == "Farmacia":
+            self.tiempoPermanenciaTotalFarmacia += (
+                                                           paciente_atendido.tiempo_salida - paciente_atendido.tiempo_ingreso) / self.pacientes_atendidos
 
     def calcularTiempoOcupado(self, area, pacienteAtendido): 
                     # Verificar si hay al menos un médico atendiendo
@@ -555,7 +566,7 @@ class SimulacionCentroSalud:
 
             tiempoEsperaPromedioConsulta = self.tiempoEsperaPromedioAcConsulta / self.pacientesAtendidosConsulta
             porcentajeConsulta = (self.tiempoOcupadoConsulta / self.reloj) * 100
-            
+
         else:
             tiempoEsperaPromedioConsulta = 0
             porcentajeConsulta = 0
@@ -617,11 +628,11 @@ class SimulacionCentroSalud:
             else:
                 vector.append(value)
         return vector
-    
+
     # Metodo para buscar keys
     def buscar_key(self, nombre_area, evento):
         claves_encontradas = [clave for clave in self.diccionario.keys() if
-                                nombre_area in clave and clave.startswith(evento)]
+                              nombre_area in clave and clave.startswith(evento)]
         if claves_encontradas:
             return claves_encontradas[0]
         else:
@@ -651,15 +662,15 @@ class SimulacionCentroSalud:
             }
 
 
-            if area not in evento_map:
-                raise ValueError("Área no reconocida")
+        if area not in evento_map:
+            raise ValueError("Área no reconocida")
 
-            llegada_evento, fin_atencion_evento = evento_map[area]
-            # Redondear a 4 decimales
-            if tiempo_entre_llegadas is not None:
-                tiempo_entre_llegadas = round(tiempo_entre_llegadas, 4)
-            if proxima_llegada is not None:
-                proxima_llegada = round(proxima_llegada, 4)
+        llegada_evento, fin_atencion_evento = evento_map[area]
+        # Redondear a 4 decimales
+        if tiempo_entre_llegadas is not None:
+            tiempo_entre_llegadas = round(tiempo_entre_llegadas, 4)
+        if proxima_llegada is not None:
+            proxima_llegada = round(proxima_llegada, 4)
 
             if evento == "llegada":
                 if area == "nutricion":
@@ -691,8 +702,8 @@ class SimulacionCentroSalud:
                             self.diccionario[f"Fin atencion {areas}"]["Fin atencion"] = "-"
 
 
-            self.diccionario["Evento"] = llegada_evento if evento == "llegada" else fin_atencion_evento
-            self.diccionario["Reloj"] = self.reloj
+        self.diccionario["Evento"] = llegada_evento if evento == "llegada" else fin_atencion_evento
+        self.diccionario["Reloj"] = self.reloj
 
             self.diccionario["Cola de consultas generales"]["Contador"] = pacientesAtendidosConsulta
             self.diccionario["Cola de odontologia"]["Contador"] = pacientesAtendidosOdontologia
