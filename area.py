@@ -15,6 +15,9 @@ class Area:
         self.primer_inicio_atencion = None
         self.pacientesAtendidos = []
 
+    def getNombre(self):
+        return self.nombre
+
     def agregar_paciente_atendido(self, paciente):
         self.pacientesAtendidos.append(paciente)
 

@@ -26,16 +26,14 @@ class VentanaSimulacion(QWidget):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
-        self.boton_simular = QPushButton('Iniciar Simulación')
-        self.boton_simular.clicked.connect(self.iniciar_simulacion)
-        self.layout.addWidget(self.boton_simular)
-
         self.scroll_area = QScrollArea()
         self.scroll_area_widget = QWidget()
         self.tabla_layout = QVBoxLayout(self.scroll_area_widget)
         self.scroll_area.setWidget(self.scroll_area_widget)
         self.scroll_area.setWidgetResizable(True)
         self.layout.addWidget(self.scroll_area)
+
+        self.iniciar_simulacion()
 
     def iniciar_simulacion(self):
         simulacion = SimulacionCentroSalud(self.lineas, self.mostrar_desde, self.lambda1, self.lambda2, self.lambda3,
@@ -64,11 +62,11 @@ class VentanaSimulacion(QWidget):
             'RND','llegada paciente Pediatria.Tiempo entre llegadas', 'llegada paciente Pediatria.Proxima llegada',
             'RND','llegada paciente Laboratorio.Tiempo entre llegadas', 'llegada paciente Laboratorio.Proxima llegada',
             'RND','llegada paciente Farmacia.Tiempo entre llegadas', 'llegada paciente Farmacia.Proxima llegada',
-            'RND','fin atencion consulta.Tiempo atencion', 'fin atencion consulta.Fin atencion', '1', '2', '3', '4', '5' ,
-            'RND','fin atencion odontologia.Tiempo atencion', 'fin atencion odontologia.Fin atencion','1', '2', '3',
-            'RND','fin atencion Pediatria.Tiempo atencion', 'fin atencion Pediatria.Fin atencion','1', '2',
-            'RND','fin atencion laboratorio.Tiempo atencion', 'fin atencion laboratorio.Fin atencion','1', '2', '3', '4',
-            'RND','fin atencion farmacia.Tiempo atencion', 'fin atencion farmacia.Fin atencion','1', '2',
+            'RND','fin atencion consulta.Tiempo atencion', '1', '2', '3', '4', '5' ,
+            'RND','fin atencion odontologia.Tiempo atencion', '1', '2', '3',
+            'RND','fin atencion Pediatria.Tiempo atencion', '1', '2',
+            'RND','fin atencion laboratorio.Tiempo atencion', '1', '2', '3', '4',
+            'RND','fin atencion farmacia.Tiempo atencion', '1', '2',
             'Tiempo de espera Promedio.Consulta general', 'Tiempo de espera Promedio.Odontologia',
             'Tiempo de espera Promedio.Pediatria', 'Tiempo de espera Promedio.Laboratorio',
             'Tiempo de espera Promedio.Farmacia', 'Cola de consultas generales.Medico 1',
