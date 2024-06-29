@@ -1,8 +1,6 @@
 from simulacionCentroSalud import SimulacionCentroSalud
 from PyQt5.QtWidgets import QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, \
-    QPushButton, QScrollArea
-from PyQt5.QtGui import QColor, QFont, QBrush
-
+    QPushButton, QScrollArea, QHBoxLayout, QStackedWidget, QStackedLayout
 
 class VentanaSimulacion(QWidget):
     def __init__(self, lineas, mostrar_desde, lambda1, lambda2, lambda3, lambda4, lambda5,
@@ -10,6 +8,7 @@ class VentanaSimulacion(QWidget):
         super().__init__()
         self.setWindowTitle('Simulación Centro de Salud')
         self.setGeometry(100, 100, 1200, 600)
+        
         self.lineas = lineas
         self.mostrar_desde = mostrar_desde
         self.lambda1 = lambda1
@@ -26,12 +25,20 @@ class VentanaSimulacion(QWidget):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
-        self.scroll_area = QScrollArea()
-        self.scroll_area_widget = QWidget()
-        self.tabla_layout = QVBoxLayout(self.scroll_area_widget)
-        self.scroll_area.setWidget(self.scroll_area_widget)
-        self.scroll_area.setWidgetResizable(True)
-        self.layout.addWidget(self.scroll_area)
+        # StackedWidget para cambiar entre tablas
+        self.stacked_widget = QStackedWidget()
+        self.layout.addWidget(self.stacked_widget)
+
+        self.tabla_resultados = QTableWidget()
+        self.tabla_objetos = QTableWidget()
+
+        self.stacked_widget.addWidget(self.tabla_resultados)
+
+        # Layout para el botón
+        self.button_layout = QHBoxLayout()
+        self.layout.addLayout(self.button_layout)
+
+        self.boton_toggle = QPushButton("Mostrar objetos temporales")
 
         self.iniciar_simulacion()
 
@@ -46,9 +53,8 @@ class VentanaSimulacion(QWidget):
         self.mostrar_tiempo_espera(simulacion.calcularEstadisticas())
 
     def mostrar_resultados(self, tablaResultados):
-        tabla_widget = QTableWidget()
-        self.tabla_layout.addWidget(tabla_widget)
-        self.llenar_tabla(tabla_widget, tablaResultados)
+        
+        self.llenar_tabla(self.tabla_resultados, tablaResultados)
 
     def llenar_tabla(self, tabla, tablaResultados):
         # Fijar la cantidad de filas en la tabla
@@ -62,11 +68,11 @@ class VentanaSimulacion(QWidget):
             'RND','llegada paciente Pediatria.Tiempo entre llegadas', 'llegada paciente Pediatria.Proxima llegada',
             'RND','llegada paciente Laboratorio.Tiempo entre llegadas', 'llegada paciente Laboratorio.Proxima llegada',
             'RND','llegada paciente Farmacia.Tiempo entre llegadas', 'llegada paciente Farmacia.Proxima llegada',
-            'RND','fin atencion consulta.Tiempo atencion', '1', '2', '3', '4', '5' ,
-            'RND','fin atencion odontologia.Tiempo atencion', '1', '2', '3',
-            'RND','fin atencion Pediatria.Tiempo atencion', '1', '2',
-            'RND','fin atencion laboratorio.Tiempo atencion', '1', '2', '3', '4',
-            'RND','fin atencion farmacia.Tiempo atencion', '1', '2',
+            'RND','fin atencion consulta.Tiempo atencion', 'fin atencion consulta.Fin atencion', '1', '2', '3', '4', '5' ,
+            'RND','fin atencion odontologia.Tiempo atencion', 'fin atencion odontologia.Fin atencion','1', '2', '3',
+            'RND','fin atencion Pediatria.Tiempo atencion', 'fin atencion Pediatria.Fin atencion','1', '2',
+            'RND','fin atencion laboratorio.Tiempo atencion', 'fin atencion laboratorio.Fin atencion','1', '2', '3', '4',
+            'RND','fin atencion farmacia.Tiempo atencion', 'fin atencion farmacia.Fin atencion','1', '2',
             'Tiempo de espera Promedio.Consulta general', 'Tiempo de espera Promedio.Odontologia',
             'Tiempo de espera Promedio.Pediatria', 'Tiempo de espera Promedio.Laboratorio',
             'Tiempo de espera Promedio.Farmacia', 'Cola de consultas generales.Medico 1',
@@ -98,10 +104,6 @@ class VentanaSimulacion(QWidget):
         """)
         # Ajustar las columnas al contenido
         tabla.resizeColumnsToContents()
-
-        # Aplicar estilo a los encabezados
-
-
 
         # Llenar la tabla con los datos de tablaResultados
         for i, resultado in enumerate(tablaResultados):
@@ -142,7 +144,7 @@ class VentanaSimulacion(QWidget):
         etiquetaPacientesPorArea = QLabel(pacientesporarea)
         etiquetaTiemposPermanencia = QLabel(tiemposPermanencia)
 
-        self.tabla_layout.addWidget(etiqueta_resultados_general)
-        self.tabla_layout.addWidget(etiqueta_resultados_especialidad)
-        self.tabla_layout.addWidget(etiquetaPacientesPorArea)
-        self.tabla_layout.addWidget(etiquetaTiemposPermanencia)
+        self.layout.addWidget(etiqueta_resultados_general)
+        self.layout.addWidget(etiqueta_resultados_especialidad)
+        self.layout.addWidget(etiquetaPacientesPorArea)
+        self.layout.addWidget(etiquetaTiemposPermanencia)
