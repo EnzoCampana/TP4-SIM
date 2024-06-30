@@ -15,6 +15,8 @@ class Area:
         self.primer_inicio_atencion = None
         self.pacientesAtendidos = []
 
+        self.pacientesTotal = []
+
     def getNombre(self):
         return self.nombre
 
@@ -23,3 +25,6 @@ class Area:
 
     def quitar_paciente_atendido(self, paciente):
         self.pacientesAtendidos.remove(paciente)
+
+    def agregar_paciente_entrante(self, paciente):
+        self.pacientesTotal.append(paciente)

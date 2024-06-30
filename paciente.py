@@ -1,11 +1,11 @@
 import random
 
 class Paciente:
-    def __init__(self, tiempo_ingreso):
+    def __init__(self, tiempo_ingreso, id):
         
         self.tiempo_ingreso = tiempo_ingreso
         #esto le genera un id unico
-        #self.id = 
+        self.id = id
         self.estado = "EA"  # "esperando_atencion" o "siendo_atendido" # destruido
         # estados EA - SA_[LETRA AREA](N) <- N es el numero de servidor
         self.tiempo_ingreso = tiempo_ingreso
@@ -19,6 +19,9 @@ class Paciente:
 
     def getEstado(self):
         return self.estado
+    
+    def getId(self):
+        return self.id
     
     def setEstadoSiendoAtendido(self, nombre_area, num_servidor):
         self.estado = f"SA_{nombre_area}({num_servidor})"

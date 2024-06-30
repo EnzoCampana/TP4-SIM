@@ -1,4 +1,5 @@
 from simulacionCentroSalud import SimulacionCentroSalud
+
 from PyQt5.QtWidgets import QLabel, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, \
     QPushButton, QScrollArea, QHBoxLayout, QStackedWidget, QStackedLayout
 
@@ -30,15 +31,8 @@ class VentanaSimulacion(QWidget):
         self.layout.addWidget(self.stacked_widget)
 
         self.tabla_resultados = QTableWidget()
-        self.tabla_objetos = QTableWidget()
 
         self.stacked_widget.addWidget(self.tabla_resultados)
-
-        # Layout para el botón
-        self.button_layout = QHBoxLayout()
-        self.layout.addLayout(self.button_layout)
-
-        self.boton_toggle = QPushButton("Mostrar objetos temporales")
 
         self.iniciar_simulacion()
 
@@ -113,6 +107,8 @@ class VentanaSimulacion(QWidget):
                 else:
                     item = QTableWidgetItem("")
                 tabla.setItem(i, j, item)
+        
+        
 
     def mostrar_tiempo_espera(self, resultados_finales):
         pacientesAtendidos, tiempoEsperaPromedioTotal, tiempoEsperaPromedioConsulta, tiempoEsperaPromedioOdontologia, tiempoEsperaPromedioPediatria, tiempoEsperaPromedioLaboratorio, tiempoEsperaPromedioFarmacia, tiempoPermanenciaTotal , porcentajeConsulta, porcentajeOdontologia, porcentajePediatria, porcentajeLaboratorio, porcentajeFarmacia, pacientesAtendidosConsulta, pacientesAtendidosOdontologia, pacientesAtendidosPediatria, pacientesAtendidosFarmacia, pacientesAtendidosLaboratorio, tiempoPermanenciaTotalConsulta, tiempoPermanenciaTotalFarmacia, tiempoPermanenciaTotalLaboratorio, tiempoPermanenciaTotalOdontologia, tiempoPermanenciaTotalOdontologia = resultados_finales
@@ -148,3 +144,9 @@ class VentanaSimulacion(QWidget):
         self.layout.addWidget(etiqueta_resultados_especialidad)
         self.layout.addWidget(etiquetaPacientesPorArea)
         self.layout.addWidget(etiquetaTiemposPermanencia)
+
+
+
+
+
+

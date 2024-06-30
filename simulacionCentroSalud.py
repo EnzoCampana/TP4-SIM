@@ -89,7 +89,9 @@ class SimulacionCentroSalud:
         self.tiempoPermanenciaTotalFarmacia = 0
 
         self.tablaResultados = []  # Vector ESTADO
-        self.estados_pacientes = [] # tabla de los estados de los pacientes
+        self.estados_pacientes = {} # tabla de los estados de los pacientes
+
+        self.idPaciente = 0
         
         self.diccionario = {
 
@@ -231,11 +233,20 @@ class SimulacionCentroSalud:
             self.diccionario[key_llegada]["Proxima llegada"] = tiempo_llegada + self.reloj
 
     def procesarObjetosTemporales(self):
-        
-        for area in self.areas:
-            for paciente in area.pacientesAtendidos:
-                self.estados_pacientes.append(paciente.getEstado())
+        nuevos_estados = {}  # Diccionario temporal para los nuevos estados
 
+        for area in self.areas:
+            for paciente in area.pacientesTotal:
+                paciente_id = paciente.getId()
+                paciente_estado = paciente.getEstado()
+                
+                # Actualizar el diccionario temporal con el nuevo estado del paciente
+                nuevos_estados[paciente_id] = paciente_estado
+        
+        # Actualizar self.estados_pacientes con los nuevos estados
+        for paciente_id, estado in nuevos_estados.items():
+            self.estados_pacientes[paciente_id] = estado
+        
     # Metodo que inicializa la simulacion. Calcula los tiempos de llegada de cada area. Actualiza el diccionario. 
     def inicializar(self):
 
@@ -283,17 +294,18 @@ class SimulacionCentroSalud:
                 
     def procesarLlegadaPaciente(self, nombre_area):
 
-        global numero 
+        global numero
+        
+        
         area_atencion = None
         area_atencion = self.buscar_area(nombre_area)
         
-        if self.nro_evento_simulado == 10:
-            print(self.estados_pacientes)
+
 
         if area_atencion is None:
             raise ValueError(f"El área {nombre_area} no existe")
         
-        nuevo_paciente = Paciente(self.reloj)
+        nuevo_paciente = Paciente(self.reloj, self.idPaciente)
 
         # Nutricion se maneja con el random, no con tiempo de llegadas
         if area_atencion.nombre != "nutricion":
@@ -306,7 +318,7 @@ class SimulacionCentroSalud:
             self.eventos.append((f"llegada_paciente_{area_atencion.nombre}", proxima_llegada))
 
             self.actualizar_diccionario_llegadas(area_atencion, tiempo_entre_llegadas, rndLlegada)
-            
+            self.idPaciente += 1
         else:
 
             # Esto es para el area de nutricion, recordemos que se maneja con el random
@@ -352,6 +364,7 @@ class SimulacionCentroSalud:
                 self.diccionario[llave][medico_key] = "Atendiendo"
 
                 area_atencion.agregar_paciente_atendido(nuevo_paciente)
+
                 atendido = True
                 break
 
@@ -363,6 +376,8 @@ class SimulacionCentroSalud:
             cola += 1
             self.diccionario[llave]["Cola"] = str(cola)
             area_atencion.cola_area.append(nuevo_paciente)
+
+        area_atencion.agregar_paciente_entrante(nuevo_paciente)
 
         asiste_servicio = False
         self.escribir_fila_tablaResultados(area_atencion.nombre, "llegada", rndLlegada, tiempo_entre_llegadas, proxima_llegada, rndAtencion if atendido else None,
@@ -415,7 +430,8 @@ class SimulacionCentroSalud:
                 self.diccionario["Cola de consultas generales"][
                     "Tiempo de permanencia"]=self.tiempoPermanenciaTotalConsulta
                 self.diccionario["Tiempo de espera promedio"]["Consulta general"] = self.tiempoEsperaPromedioAcConsulta / self.pacientesAtendidosConsulta
-            
+
+
             elif nombre_area == "odontologia":
                 self.tiempoEsperaPromedioAcOdontologia += (
                     paciente_atendido.tiempo_inicio_atencion - paciente_atendido.tiempo_ingreso)
@@ -445,6 +461,7 @@ class SimulacionCentroSalud:
                 self.actualizar_tiempo_permanencia(paciente_atendido, "Farmacia")
                 self.diccionario["Cola de farmacia"]["Tiempo de permanencia"] = self.tiempoPermanenciaTotalFarmacia
                 self.diccionario["Tiempo de espera promedio"]["Farmacia"] = self.tiempoEsperaPromedioAcFarmacia / self.pacientesAtendidosFarmacia
+
 
             # Simulamos si va al nuevo servicio o no
             asiste_servicio = None
@@ -504,6 +521,7 @@ class SimulacionCentroSalud:
                                                     self.pacientesAtendidosLaboratorio, self.pacientesAtendidosFarmacia,
                                                     self.mostrar_desde, self.nro_evento_simulado, self.lineas, asiste_servicio)
             
+
     # Metodos para las estadisticas ===============================
     def actualizar_tiempo_permanencia(self, paciente_atendido, area_nombre):
         paciente_atendido.tiempo_salida = self.reloj
@@ -620,9 +638,6 @@ class SimulacionCentroSalud:
                 self.tiempoPermanenciaTotalConsulta, self.tiempoPermanenciaTotalFarmacia, 
                 self.tiempoPermanenciaTotalLaboratorio, self.tiempoPermanenciaTotalOdontologia, self.tiempoPermanenciaTotalOdontologia)
 
-        
-    
-
     # -------------------------- Metodos extra ------------------------------------------
 
     
@@ -695,12 +710,11 @@ class SimulacionCentroSalud:
             self.diccionario["Cola de pediatria"]["Contador"] = pacientesAtendidosPediatria
             self.diccionario["Cola de laboratorio"]["Contador"] = pacientesAtendidosLaboratorio
             self.diccionario["Cola de farmacia"]["Contador"] = pacientesAtendidosFarmacia
-
-            #print("ESTO ES DESPUES DE ESCRIBIR FILA TABLA RESULTAD JJAJA")
-            #print(json.dumps(self.diccionario, indent=4))
+ 
             
             if (mostrar_desde <= nro_evento_simulado <= mostrar_desde + 299) or nro_evento_simulado == lineas:
+                print(self.estados_pacientes)
                 lista = self.diccionario_vector()
                 self.tablaResultados.append(lista)
-            
-            
+                
+        
